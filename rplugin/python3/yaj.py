@@ -59,7 +59,7 @@ class Yaj(object):
         self.log(diff)
         self.nvim.command('normal! %dj' % (diff))
 
-        # Spawn the filter bar (Use the filter from bolt)
+        # Spawn the filter bar (Use the filter from Bolt)
         # TODO: Cont here..
 
     @neovim.command("YayShowLog", range='', nargs='*', sync=True)
