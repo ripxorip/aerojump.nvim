@@ -8,8 +8,19 @@ import neovim
 import os
 import re
 
-class filter(object):
-    """ Bolt inspired filter """
+# Utility functions
+#====================
+def python_input(nvim, message = 'input'):
+    nvim.command('call inputsave()')
+    nvim.command("let user_input = input('" + message + ": ')")
+    nvim.command('call inputrestore()')
+    return nvim.eval('user_input')
+
+# Utility classes
+#====================
+class Filter(object):
+    """ Bolt inspired filter  (kept for reference)
+        filter is moved to each line instead"""
     def __init__(self):
         pass
 
@@ -35,11 +46,19 @@ class filter(object):
         self.__search(c_currentFiles, wholeString, output)
         self.__search(c_currentFiles, fuzzy, output)
 
-def python_input(nvim, message = 'input'):
-    nvim.command('call inputsave()')
-    nvim.command("let user_input = input('" + message + ": ')")
-    nvim.command('call inputrestore()')
-    return nvim.eval('user_input')
+class YajLine(object):
+    """ Class for a line in a yaj buffer """
+    def __init__(self, line, num):
+        # Raw text
+        self.raw = line
+        # Line number
+        self.num = num
+        # Matches in this line
+        self.matches = []
+
+    # Maybe use filter per line instead of the bolt way??
+    def filter(self, pattern):
+        pass
 
 @neovim.plugin
 class Yaj(object):
@@ -47,7 +66,7 @@ class Yaj(object):
         self.nvim = nvim
         self.logstr = []
         self.logstr.append('== Yaj debug ==')
-        self.filter = filter()
+        self.filter = Filter()
 
     def log(self, s):
         self.logstr.append(str(s))
@@ -62,19 +81,41 @@ class Yaj(object):
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=YajFilter')
 
-    def apply_filter(self, new_filter):
-        """ Returns true/false depending on matches """
-        filteredBuffer = []
-        self.filter.filter(self.ogBuf, new_filter, filteredBuffer)
-        return filteredBuffer
+    def apply_filter(self):
+        # FIXME Shall apply filter for each line
+        # i.e. call the filter function for each line
+        return
+
+    def get_lines(self, lines):
+        ret = []
+        for i, line in enumerate(lines):
+            self.log(i+1)
+            ret.append(YajLine(line, i+1))
+        return ret
+
+    def draw_unfiltered(self):
+        # FIXME restore original cursor position etc
+        # shall be easy if done like in the yaj method
+        lines = []
+        for l in self.lines:
+            lines.append(l.raw)
+        self.buf_ref[:] = lines[:]
+
+    def draw(self):
+        """ Draw function of the plugin """
+        if self.filter_string == '':
+            self.draw_unfiltered()
+        else:
+            # FIXME make real implementation of the filtered words,
+            # highlights etc..
+            self.buf_ref[:] = ['ok', 'dok']
 
     @neovim.autocmd("TextChangedI", pattern='YajFilter', sync=True)
     def insert_changed(self):
         """ Process filter input """
-        filteredBuffer = self.apply_filter(self.nvim.current.line)
-        # Update the filter UI
-        # self.nvim.current.line = self.nvim.current.line
-        self.buf_ref[:] = filteredBuffer[:]
+        self.filter_string = self.nvim.current.line
+        self.apply_filter()
+        self.draw()
 
     @neovim.command("Yaj", range='', nargs='*', sync=True)
     def yaj(self, args, range):
@@ -105,9 +146,11 @@ class Yaj(object):
         self.ogBuf = []
         self.ogBuf[:] = new_buf[:]
 
+        # Create lines
+        self.lines = self.get_lines(new_buf)
+
         # Reference to the text buffer
         self.buf_ref = new_buf
-        # FIXME fetch more info (line numbers etc.)
 
         # Update position
         new_window = self.nvim.current.window
@@ -123,7 +166,8 @@ class Yaj(object):
         self.nvim.command("startinsert!")
 
         # Reset the filter string
-        self.filtStr = ''
+        self.filter_string = ''
+        self.draw()
 
     @neovim.command("YayShowLog", range='', nargs='*', sync=True)
     def YajShowLog(self, args, range):
