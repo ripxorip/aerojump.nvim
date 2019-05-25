@@ -81,6 +81,16 @@ class Yaj(object):
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=YajFilter')
 
+    def set_original_cursor_position(self):
+        old_win = self.nvim.current.window
+        self.nvim.current.window = self.main_win
+        self.nvim.current.window.cursor = self.top_pos
+        self.nvim.command('normal! zt')
+
+        diff = self.current_pos[0] - self.top_pos[0]
+        self.nvim.command('normal! %dj' % (diff))
+        self.nvim.current.window = old_win
+
     def apply_filter(self):
         # FIXME Shall apply filter for each line
         # i.e. call the filter function for each line
@@ -94,12 +104,12 @@ class Yaj(object):
         return ret
 
     def draw_unfiltered(self):
-        # FIXME restore original cursor position etc
-        # shall be easy if done like in the yaj method
         lines = []
         for l in self.lines:
             lines.append(l.raw)
         self.buf_ref[:] = lines[:]
+        # Reset original cursor position
+        self.set_original_cursor_position()
 
     def draw(self):
         """ Draw function of the plugin """
@@ -126,11 +136,10 @@ class Yaj(object):
         window_height = window.height
 
         # Sample positions
-        current_pos = window.cursor
+        self.current_pos = window.cursor
         self.nvim.command('normal! H')
-        top_pos = window.cursor
+        self.top_pos = window.cursor
         self.nvim.command('normal! L')
-        bottom_pos = window.cursor
 
         # Spawn the filter buffer
         self.open_yaj_filter_buf()
@@ -142,10 +151,6 @@ class Yaj(object):
         # Paste the lines of the old buffer to the new
         new_buf[:] = buf[:]
 
-        # Remember original buffer contents
-        self.ogBuf = []
-        self.ogBuf[:] = new_buf[:]
-
         # Create lines
         self.lines = self.get_lines(new_buf)
 
@@ -153,12 +158,7 @@ class Yaj(object):
         self.buf_ref = new_buf
 
         # Update position
-        new_window = self.nvim.current.window
-        new_window.cursor = top_pos
-        self.nvim.command('normal! zt')
-
-        diff = current_pos[0] - top_pos[0]
-        self.nvim.command('normal! %dj' % (diff))
+        self.main_win = self.nvim.current.window
 
         # Go back to the input buffer window
         self.nvim.command('wincmd j')
@@ -168,6 +168,7 @@ class Yaj(object):
         # Reset the filter string
         self.filter_string = ''
         self.draw()
+        self.set_original_cursor_position()
 
     @neovim.command("YayShowLog", range='', nargs='*', sync=True)
     def YajShowLog(self, args, range):
