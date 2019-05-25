@@ -58,20 +58,19 @@ class YajLine(object):
 
     def filter(self, pattern):
         # Create the filter patterns
-        beginningString = '^' + pattern + '.*'
-        wholeString = '.*' + pattern + '.*'
+        wholeString = pattern
         fuzzy = '.*'
         for c in pattern:
             fuzzy += c + '.*'
         patterns = {}
-        patterns['beginning'] = beginningString
         patterns['whole'] = wholeString
         patterns['fuzzy'] = fuzzy
 
         # Perform the search
-        res = {}
+        self.res = {}
         for pat in patterns:
-            res[pat] = re.search(patterns[pat], self.raw, re.IGNORECASE)
+            # The iter works
+            self.res[pat] = re.finditer(patterns[pat], self.raw, re.IGNORECASE)
 
         # Classify/quantify matches
         # TODO cont here..
@@ -110,11 +109,15 @@ class Yaj(object):
     def apply_filter(self, filter_string):
         for l in self.lines:
             l.filter(filter_string)
+            m = l.res['whole']
+            if m != None:
+                self.log(l.raw)
+                for i in m:
+                    self.log(str(i))
 
     def get_lines(self, lines):
         ret = []
         for i, line in enumerate(lines):
-            self.log(i+1)
             ret.append(YajLine(line, i+1))
         return ret
 
