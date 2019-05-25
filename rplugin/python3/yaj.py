@@ -56,9 +56,25 @@ class YajLine(object):
         # Matches in this line
         self.matches = []
 
-    # Maybe use filter per line instead of the bolt way??
     def filter(self, pattern):
-        pass
+        # Create the filter patterns
+        beginningString = '^' + pattern + '.*'
+        wholeString = '.*' + pattern + '.*'
+        fuzzy = '.*'
+        for c in pattern:
+            fuzzy += c + '.*'
+        patterns = {}
+        patterns['beginning'] = beginningString
+        patterns['whole'] = wholeString
+        patterns['fuzzy'] = fuzzy
+
+        # Perform the search
+        res = {}
+        for pat in patterns:
+            res[pat] = re.search(patterns[pat], self.raw, re.IGNORECASE)
+
+        # Classify/quantify matches
+        # TODO cont here..
 
 @neovim.plugin
 class Yaj(object):
@@ -91,10 +107,9 @@ class Yaj(object):
         self.nvim.command('normal! %dj' % (diff))
         self.nvim.current.window = old_win
 
-    def apply_filter(self):
-        # FIXME Shall apply filter for each line
-        # i.e. call the filter function for each line
-        return
+    def apply_filter(self, filter_string):
+        for l in self.lines:
+            l.filter(filter_string)
 
     def get_lines(self, lines):
         ret = []
@@ -124,7 +139,7 @@ class Yaj(object):
     def insert_changed(self):
         """ Process filter input """
         self.filter_string = self.nvim.current.line
-        self.apply_filter()
+        self.apply_filter(self.filter_string)
         self.draw()
 
     @neovim.command("Yaj", range='', nargs='*', sync=True)
