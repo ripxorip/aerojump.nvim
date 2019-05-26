@@ -55,8 +55,57 @@ class YajLine(object):
         self.num = num
         # Matches in this line
         self.matches = []
+        self.logstr = []
+
+    def log(self, s):
+        self.logstr.append(str(s))
+
+    def __match_from(self, matches, pattern, pat_index, word_index):
+        match = False
+        for i in reversed((range(0, word_index))):
+            if self.raw[i] == pattern[pat_index]:
+                matches.append(i)
+                match = True
+                break
+        if match:
+            next_pat_index = pat_index - 1
+            next_word_index = word_index - 1
+            # Final match in the pattern
+            if next_pat_index < 0:
+                return True
+            # More characters to process
+            elif next_word_index > 0:
+                # Recursion :)
+                return self.__match_from(matches, pattern, next_pat_index, next_word_index)
+            # No more characters left to process but pattern is complete
+            else:
+                return False
+        else:
+            return False
+
 
     def filter(self, pattern):
+        # google test is a good system grtags gtags
+        # inp: gtags
+        # TODO: Cont. here write my _own_ matcher:
+        # 1. Find index of all filter characters
+        # 2. Match from right to left
+        # 3. Filter out words from 'fuzzy partials'
+        # 4. Create score for the line (partial and full)
+
+        # Reset the matches
+        self.matches = []
+
+        # Reverse loop over a list
+        for i in reversed((range(0, len(self.raw)))):
+            # Reset the proposed matches
+            # not so recursive... FIXME
+            proposed_matches = []
+            # Start with last pattern c and last char of raw
+            if self.__match_from(proposed_matches, pattern, len(pattern)-1, i):
+                self.matches.append(proposed_matches)
+
+    def _filter(self, pattern):
         # Create the filter patterns
         # TODO: Cont. here write my _own_ matcher:
         # 1. Find index of all filter characters
@@ -215,4 +264,8 @@ class Yaj(object):
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=yaj_log')
         self.nvim.current.buffer.append(self.logstr)
+        self.nvim.current.buffer.append('== Lines Log ==')
+        for i in self.lines:
+            # Add log for each line
+            self.nvim.current.buffer.append(i.logstr)
 
