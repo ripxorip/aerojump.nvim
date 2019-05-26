@@ -58,6 +58,12 @@ class YajLine(object):
 
     def filter(self, pattern):
         # Create the filter patterns
+        # TODO: Cont. here write my _own_ matcher:
+        # 1. Find index of all filter characters
+        # 2. Match from right to left
+        # 3. Filter out words from 'fuzzy partials'
+        # 4. Create score for the line (partial and full)
+
         wholeString = pattern
         fuzzy = '.*'
         for c in pattern:
