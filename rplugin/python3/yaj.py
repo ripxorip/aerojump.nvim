@@ -61,7 +61,7 @@ class YajLine(object):
         wholeString = pattern
         fuzzy = '.*'
         for c in pattern:
-            fuzzy += c + '.*'
+            fuzzy += '(' + c + ')' + '.*'
         patterns = {}
         patterns['whole'] = wholeString
         patterns['fuzzy'] = fuzzy
@@ -72,8 +72,24 @@ class YajLine(object):
             # The iter works
             self.res[pat] = re.finditer(patterns[pat], self.raw, re.IGNORECASE)
 
+        # Reset the matches
+        self.matches = []
         # Classify/quantify matches
-        # TODO cont here..
+        m = self.res['whole']
+        if m != None:
+            for i in m:
+                pass
+                self.matches.append(i.span())
+
+        m = self.res['fuzzy']
+        if m != None:
+            for i in m:
+                for j in range(1, i.lastindex):
+                    self.matches.append(i.span(j))
+
+        # Filter out duplicates
+        filtered_matches = []
+
 
 @neovim.plugin
 class Yaj(object):
@@ -109,11 +125,10 @@ class Yaj(object):
     def apply_filter(self, filter_string):
         for l in self.lines:
             l.filter(filter_string)
-            m = l.res['whole']
-            if m != None:
+            if l.matches != []:
                 self.log(l.raw)
-                for i in m:
-                    self.log(str(i))
+            for m in l.matches:
+                self.log(str(m))
 
     def get_lines(self, lines):
         ret = []
