@@ -18,39 +18,12 @@ def python_input(nvim, message = 'input'):
 
 # Utility classes
 #====================
-class Filter(object):
-    """ Bolt inspired filter  (kept for reference)
-        filter is moved to each line instead"""
-    def __init__(self):
-        pass
-
-    def __search(self, input, pattern, output):
-        for entry in input[:]:
-            res = re.search(pattern, entry, re.IGNORECASE)
-            if res is not None:
-                output.append(entry)
-                input.remove(entry)
-
-    def filter(self, input, pattern, output):
-        # Setup patterns for the search
-        beginningString = '^' + pattern + '.*'
-        wholeString = '.*' + pattern + '.*'
-        fuzzy = '.*'
-        for c in pattern:
-            fuzzy += c + '.*'
-        # Perform the search
-        c_currentFiles = []
-        c_currentFiles[:] = input[:]
-        output[:] = []
-        self.__search(c_currentFiles, beginningString, output)
-        self.__search(c_currentFiles, wholeString, output)
-        self.__search(c_currentFiles, fuzzy, output)
-
 class YajLine(object):
     """ Class for a line in a yaj buffer """
     def __init__(self, line, num):
         # Raw text
         self.raw = line
+        self.raw_lower = line.lower()
         # Line number
         self.num = num
         # Matches in this line
@@ -62,20 +35,33 @@ class YajLine(object):
 
     def __match_from(self, matches, pattern, pat_index, word_index):
         match = False
+
+        if word_index == 0 and pattern[pat_index] == self.raw_lower[word_index]:
+            matches.append(1)
+            return True
+
         for i in reversed((range(0, word_index+1))):
-            if self.raw[i] == pattern[pat_index]:
+            if self.raw_lower[i] == pattern[pat_index]:
                 matches.append(i+1)
                 match = True
                 matched_index = i
                 break
+
+            # FIXME: Too simplistic, might need more _recursion_ ! Cont here.. log try 'sth'
+            # Quick fick: helper function to get the 'leftmost' occurence of the character instead
+            # Wont work either...
+            # Can I skip it??
+            elif pat_index + 1 < len(pattern) + 1 and self.raw_lower[i] == pattern[pat_index + 1]:
+                break
+
         if match:
             next_pat_index = pat_index - 1
-            next_word_index = matched_index
+            next_word_index = matched_index - 1
             # Final match in the pattern
             if next_pat_index < 0:
                 return True
             # More characters to process
-            elif next_word_index > 0:
+            elif next_word_index >= 0:
                 # Recursion :)
                 return self.__match_from(matches, pattern, next_pat_index, next_word_index)
             # No more characters left to process but pattern is complete
@@ -86,11 +72,8 @@ class YajLine(object):
 
 
     def filter(self, pattern):
-        # google test is a good system grtags gtags
-        # inp: gtags
-        # TODO: Cont. here write my _own_ matcher:
-        # 1. Find index of all filter characters
-        # 2. Match from right to left
+        # 1. Find index of all filter characters [done]
+        # 2. Match from right to left [done]
         # 3. Filter out words from 'fuzzy partials'
         # 4. Create score for the line (partial and full)
 
@@ -102,50 +85,14 @@ class YajLine(object):
             # Reset the proposed matches
             proposed_matches = []
             # Start with last pattern c and last char of raw
-            if self.raw[i] == pattern[len(pattern)-1]:
+            if self.raw_lower[i] == pattern[len(pattern)-1]:
                 if self.__match_from(proposed_matches, pattern, len(pattern)-1, i):
                     self.matches.append(proposed_matches)
 
-    def _filter(self, pattern):
-        # Create the filter patterns
-        # TODO: Cont. here write my _own_ matcher:
-        # 1. Find index of all filter characters
-        # 2. Match from right to left
-        # 3. Filter out words from 'fuzzy partials'
-        # 4. Create score for the line (partial and full)
-
-        wholeString = pattern
-        fuzzy = '.*'
-        for c in pattern:
-            fuzzy += '(' + c + ')' + '.*'
-        patterns = {}
-        patterns['whole'] = wholeString
-        patterns['fuzzy'] = fuzzy
-
-        # Perform the search
-        self.res = {}
-        for pat in patterns:
-            # The iter works
-            self.res[pat] = re.finditer(patterns[pat], self.raw, re.IGNORECASE)
-
-        # Reset the matches
-        self.matches = []
-        # Classify/quantify matches
-        m = self.res['whole']
-        if m != None:
-            for i in m:
-                pass
-                self.matches.append(i.span())
-
-        m = self.res['fuzzy']
-        if m != None:
-            for i in m:
-                for j in range(1, i.lastindex):
-                    self.matches.append(i.span(j))
-
-        # Filter out duplicates
-        filtered_matches = []
-
+        for m in self.matches:
+            # Reverse results
+            m.reverse()
+            # TODO Sort matches etc
 
 @neovim.plugin
 class Yaj(object):
@@ -153,7 +100,6 @@ class Yaj(object):
         self.nvim = nvim
         self.logstr = []
         self.logstr.append('== Yaj debug ==')
-        self.filter = Filter()
 
     def log(self, s):
         self.logstr.append(str(s))
@@ -195,7 +141,7 @@ class Yaj(object):
     def draw_unfiltered(self):
         lines = []
         for l in self.lines:
-            lines.append(l.raw)
+            lines.append(l.raw_lower)
         self.buf_ref[:] = lines[:]
         # Reset original cursor position
         self.set_original_cursor_position()
@@ -207,13 +153,19 @@ class Yaj(object):
         else:
             # FIXME make real implementation of the filtered words,
             # highlights etc..
-            self.buf_ref[:] = ['ok', 'dok']
+            self.buf_ref[:] = []
+            for l in self.lines:
+                if l.matches != []:
+                    self.buf_ref.append(l.raw_lower)
+                    for m in l.matches:
+                        self.buf_ref.append(str(m))
 
     @neovim.autocmd("TextChangedI", pattern='YajFilter', sync=True)
     def insert_changed(self):
         """ Process filter input """
         self.filter_string = self.nvim.current.line
-        self.apply_filter(self.filter_string)
+        if self.filter_string != '':
+            self.apply_filter(self.filter_string)
         self.draw()
 
     @neovim.command("Yaj", range='', nargs='*', sync=True)
@@ -242,6 +194,14 @@ class Yaj(object):
 
         # Create lines
         self.lines = self.get_lines(new_buf)
+
+        # Fetch current tabstop
+        # needed in order to convert character
+        # position to vim position
+        self.nvim.command('redir @a')
+        self.nvim.command('set tabstop?')
+        self.nvim.command('redir END')
+        self.tabstop = [int(s) for s in self.nvim.eval('@a').strip('\n').split('=') if s.isdigit()][0]
 
         # Reference to the text buffer
         self.buf_ref = new_buf
