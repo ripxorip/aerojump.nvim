@@ -62,14 +62,15 @@ class YajLine(object):
 
     def __match_from(self, matches, pattern, pat_index, word_index):
         match = False
-        for i in reversed((range(0, word_index))):
+        for i in reversed((range(0, word_index+1))):
             if self.raw[i] == pattern[pat_index]:
-                matches.append(i)
+                matches.append(i+1)
                 match = True
+                matched_index = i
                 break
         if match:
             next_pat_index = pat_index - 1
-            next_word_index = word_index - 1
+            next_word_index = matched_index
             # Final match in the pattern
             if next_pat_index < 0:
                 return True
@@ -99,11 +100,11 @@ class YajLine(object):
         # Reverse loop over a list
         for i in reversed((range(0, len(self.raw)))):
             # Reset the proposed matches
-            # not so recursive... FIXME
             proposed_matches = []
             # Start with last pattern c and last char of raw
-            if self.__match_from(proposed_matches, pattern, len(pattern)-1, i):
-                self.matches.append(proposed_matches)
+            if self.raw[i] == pattern[len(pattern)-1]:
+                if self.__match_from(proposed_matches, pattern, len(pattern)-1, i):
+                    self.matches.append(proposed_matches)
 
     def _filter(self, pattern):
         # Create the filter patterns
@@ -264,8 +265,8 @@ class Yaj(object):
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=yaj_log')
         self.nvim.current.buffer.append(self.logstr)
-        self.nvim.current.buffer.append('== Lines Log ==')
-        for i in self.lines:
+        #self.nvim.current.buffer.append('== Lines Log ==')
+        #for i in self.lines:
             # Add log for each line
-            self.nvim.current.buffer.append(i.logstr)
+        #    self.nvim.current.buffer.append(i.logstr)
 
