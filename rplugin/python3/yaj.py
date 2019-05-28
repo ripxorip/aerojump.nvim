@@ -29,21 +29,24 @@ class YajLine(object):
         # Matches in this line
         self.matches = []
 
-    def __sort_matches(self, matches):
+    def __score_matches(self, matches, pat_len):
         sorted_matches = []
+        self.scores = []
         for m in matches:
             i = 0
+            score = 1
             while i < len(m):
                 num = m[i]
                 c_match = [m[i]]
                 while i < len(m) - 1 and m[i+1] - m[i] == 1:
                     c_match.append(m[i+1])
+                    score += 1
                     i += 1
                 i += 1
                 if c_match not in sorted_matches:
                     sorted_matches.append(c_match)
-        matches[:] = sorted_matches[:]
-        matches = matches.sort(key=len, reverse=True)
+            self.scores.append(score/pat_len)
+        return sorted_matches
 
     def __find_whole_words(self, matches):
         whole_words = []
@@ -75,11 +78,6 @@ class YajLine(object):
         return False
 
     def filter(self, pattern):
-        # 1. Find index of all filter characters [done]
-        # 2. Match from right to left [done]
-        # 3. Filter out words from 'fuzzy partials'
-        # 4. Create score for the line (partial and full)
-
         # Reset the matches
         self.matches = []
 
@@ -91,18 +89,12 @@ class YajLine(object):
                 if self.__match_from(proposed_matches, pattern, 0, i):
                     self.matches.append(proposed_matches)
 
-        # Is this desired? (maybe not, will be kept for future reference)
-        # shall be used to filter out from 'exp explorere explorer'
-        # shall filter out whole words (which shall be prioritized)
+        # 1.0 equals full match, thereafter fuzzy partials
+        self.__score_matches(self.matches, len(pattern))
 
-        # increase score the more consecutive words thats available
-
-        # self.__sort_matches(self.matches)
-        # Adds the whole words filter
-        # self.__find_whole_words(self.matches)
-
-        # separate whole words from fuzzy words using the filter
-        # TODO Cont. here by start using the filter
+        # Sorting example fore future reference, the parent class
+        # matches[:] = sorted_matches[:]
+        # matches = matches.sort(key=len, reverse=True)
 
 
 
@@ -169,7 +161,8 @@ class Yaj(object):
             for l in self.lines:
                 if l.matches != []:
                     self.buf_ref.append(l.raw_lower)
-                    for m in l.matches:
+                    for i, m in enumerate(l.matches):
+                        self.buf_ref.append(str(l.scores[i]))
                         self.buf_ref.append(str(m))
 
     @neovim.autocmd("TextChangedI", pattern='YajFilter', sync=True)
