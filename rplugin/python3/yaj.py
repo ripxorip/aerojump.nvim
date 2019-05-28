@@ -14,6 +14,8 @@ import re
 # this utility can be borrowed for the fetching of the tabwidth
 # too.
 
+# Add support for different kind of modes too..
+
 # Utility functions
 #====================
 def python_input(nvim, message = 'input'):
