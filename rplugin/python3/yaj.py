@@ -28,10 +28,24 @@ class YajLine(object):
         self.num = num
         # Matches in this line
         self.matches = []
-        self.logstr = []
 
-    def log(self, s):
-        self.logstr.append(str(s))
+    def __sort_matches(self, matches):
+        sorted_matches = []
+        for m in matches:
+            # TODO Sort matches etc
+            i = 0
+            while i < len(m):
+                num = m[i]
+                j = i
+                c_match = [m[i]]
+                while j < len(m) - 1 and m[j+1] - m[j] == 1:
+                    c_match.append(m[j+1])
+                    j += 1
+                    i = j
+                if i == j:
+                    i += 1
+                sorted_matches.append(c_match)
+        matches[:] = sorted_matches[:]
 
     def __match_from(self, matches, pattern, pat_index, word_index):
         for i in range(word_index, len(self.raw)):
@@ -51,7 +65,6 @@ class YajLine(object):
                     return False
         return False
 
-
     def filter(self, pattern):
         # 1. Find index of all filter characters [done]
         # 2. Match from right to left [done]
@@ -69,9 +82,9 @@ class YajLine(object):
                 if self.__match_from(proposed_matches, pattern, 0, i):
                     self.matches.append(proposed_matches)
 
-        for m in self.matches:
-            # TODO Sort matches etc
-            pass
+        self.__sort_matches(self.matches)
+
+
 
 @neovim.plugin
 class Yaj(object):
