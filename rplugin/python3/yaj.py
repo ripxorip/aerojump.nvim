@@ -32,20 +32,18 @@ class YajLine(object):
     def __sort_matches(self, matches):
         sorted_matches = []
         for m in matches:
-            # TODO Sort matches etc
             i = 0
             while i < len(m):
                 num = m[i]
-                j = i
                 c_match = [m[i]]
-                while j < len(m) - 1 and m[j+1] - m[j] == 1:
-                    c_match.append(m[j+1])
-                    j += 1
-                    i = j
-                if i == j:
+                while i < len(m) - 1 and m[i+1] - m[i] == 1:
+                    c_match.append(m[i+1])
                     i += 1
-                sorted_matches.append(c_match)
+                i += 1
+                if c_match not in sorted_matches:
+                    sorted_matches.append(c_match)
         matches[:] = sorted_matches[:]
+        matches = matches.sort(key=len, reverse=True)
 
     def __match_from(self, matches, pattern, pat_index, word_index):
         for i in range(word_index, len(self.raw)):
@@ -82,7 +80,10 @@ class YajLine(object):
                 if self.__match_from(proposed_matches, pattern, 0, i):
                     self.matches.append(proposed_matches)
 
-        self.__sort_matches(self.matches)
+        # Is this desired? (maybe not, will be kept for future reference)
+        # shall be used to filter out from 'exp explorere explorer'
+        # shall filter out whole words (which shall be prioritized)
+        # self.__sort_matches(self.matches)
 
 
 
