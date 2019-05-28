@@ -45,6 +45,17 @@ class YajLine(object):
         matches[:] = sorted_matches[:]
         matches = matches.sort(key=len, reverse=True)
 
+    def __find_whole_words(self, matches):
+        whole_words = []
+        for m in matches:
+            i = 0
+            while i < len(m) - 1 and m[i+1] - m[i] == 1:
+                i += 1
+            if i == len(m) - 1:
+                whole_words.append(m)
+        if whole_words != []:
+            matches[:] = whole_words[:]
+
     def __match_from(self, matches, pattern, pat_index, word_index):
         for i in range(word_index, len(self.raw)):
             if self.raw_lower[i] == pattern[pat_index]:
@@ -83,7 +94,13 @@ class YajLine(object):
         # Is this desired? (maybe not, will be kept for future reference)
         # shall be used to filter out from 'exp explorere explorer'
         # shall filter out whole words (which shall be prioritized)
+
         # self.__sort_matches(self.matches)
+        # Adds the whole words filter
+        # self.__find_whole_words(self.matches)
+
+        # separate whole words from fuzzy words using the filter
+        # TODO Cont. here by start using the filter
 
 
 
