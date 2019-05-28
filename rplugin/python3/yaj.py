@@ -36,33 +36,21 @@ class YajLine(object):
     def __match_from(self, matches, pattern, pat_index, word_index):
         match = False
 
-        if word_index == 0 and pattern[pat_index] == self.raw_lower[word_index] and pat_index == 0:
-            matches.append(1)
-            return True
-
-        for i in reversed((range(0, word_index+1))):
+        for i in range(word_index, len(self.raw)):
             if self.raw_lower[i] == pattern[pat_index]:
                 matches.append(i+1)
                 match = True
                 matched_index = i
                 break
 
-            # FIXME: Too simplistic, might need more _recursion_ ! Cont here.. log try 'sth'
-            # Quick fick: helper function to get the 'leftmost' occurence of the character instead
-            # Wont work either...
-            # Can I skip it, only break if full match found when left to right??
-            # SEEMS LIKE IT!
-            elif pat_index + 1 < len(pattern) + 1 and self.raw_lower[i] == pattern[pat_index + 1]:
-                pass
-
         if match:
-            next_pat_index = pat_index - 1
-            next_word_index = matched_index - 1
+            next_pat_index = pat_index + 1
+            next_word_index = matched_index + 1
             # Final match in the pattern
-            if next_pat_index < 0:
+            if next_pat_index == len(pattern):
                 return True
             # More characters to process
-            elif next_word_index >= 0:
+            elif next_word_index < len(self.raw_lower):
                 # Recursion :)
                 return self.__match_from(matches, pattern, next_pat_index, next_word_index)
             # No more characters left to process but pattern is complete
@@ -81,19 +69,17 @@ class YajLine(object):
         # Reset the matches
         self.matches = []
 
-        # Reverse loop over a list
-        for i in reversed((range(0, len(self.raw)))):
+        for i in range(0, len(self.raw_lower)):
             # Reset the proposed matches
             proposed_matches = []
             # Start with last pattern c and last char of raw
-            if self.raw_lower[i] == pattern[len(pattern)-1]:
-                if self.__match_from(proposed_matches, pattern, len(pattern)-1, i):
+            if self.raw_lower[i] == pattern[0]:
+                if self.__match_from(proposed_matches, pattern, 0, i):
                     self.matches.append(proposed_matches)
 
         for m in self.matches:
-            # Reverse results
-            m.reverse()
             # TODO Sort matches etc
+            pass
 
 @neovim.plugin
 class Yaj(object):
@@ -136,13 +122,13 @@ class Yaj(object):
     def get_lines(self, lines):
         ret = []
         for i, line in enumerate(lines):
-            ret.append(YajLine(line[::-1], i+1))
+            ret.append(YajLine(line, i+1))
         return ret
 
     def draw_unfiltered(self):
         lines = []
         for l in self.lines:
-            lines.append(l.raw_lower[::-1])
+            lines.append(l.raw_lower)
         self.buf_ref[:] = lines[:]
         # Reset original cursor position
         self.set_original_cursor_position()
@@ -157,7 +143,7 @@ class Yaj(object):
             self.buf_ref[:] = []
             for l in self.lines:
                 if l.matches != []:
-                    self.buf_ref.append(l.raw_lower[::-1])
+                    self.buf_ref.append(l.raw_lower)
                     for m in l.matches:
                         self.buf_ref.append(str(m))
 
@@ -166,7 +152,7 @@ class Yaj(object):
         """ Process filter input """
         self.filter_string = self.nvim.current.line
         if self.filter_string != '':
-            self.apply_filter(self.filter_string[::-1])
+            self.apply_filter(self.filter_string)
         self.draw()
 
     @neovim.command("Yaj", range='', nargs='*', sync=True)
