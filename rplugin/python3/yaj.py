@@ -145,30 +145,38 @@ class Yaj(object):
     def draw_unfiltered(self):
         lines = []
         for l in self.lines:
-            lines.append(l.raw_lower)
+            lines.append(l.raw)
         self.buf_ref[:] = lines[:]
         # Reset original cursor position
         self.set_original_cursor_position()
+        self.buf_ref.clear_highlight(self.hl_source)
+
+    def draw_filtered(self):
+        self.buf_ref[:] = []
+        for l in self.lines:
+            if l.matches != []:
+                self.buf_ref.append(l.raw)
+                for i, m in enumerate(l.matches):
+                    continue
+                    # Debug
+                    self.buf_ref.append(str(l.scores[i]))
+                    self.buf_ref.append(str(m))
+            else:
+                # Newlines or commenting text, will start with newlines
+                self.buf_ref.append('')
+        # FIXME: Cont here, see https://neovim.io/doc/user/syntax.html for
+        # Different kind of groups, could use different kind of groups depending on
+        # score..
+        # fix offset bug!
+        self.buf_ref.update_highlights(self.hl_source, [('Include', 33, 8, 16), ('Include', 33, 21, 22), ('Include', 20, 0, 1)] ,clear=True)
+        # self.buf_ref.update_highlights(self.hl_source, [('Conditional', 33, 17, 18)] ,clear=True)
 
     def draw(self):
         """ Draw function of the plugin """
         if self.filter_string == '':
             self.draw_unfiltered()
         else:
-            # FIXME make real implementation of the filtered words,
-            # highlights etc..
-            self.buf_ref[:] = []
-            for l in self.lines:
-                if l.matches != []:
-                    self.buf_ref.append(l.raw_lower)
-                    for i, m in enumerate(l.matches):
-                        continue
-                        # Debug
-                        self.buf_ref.append(str(l.scores[i]))
-                        self.buf_ref.append(str(m))
-                else:
-                    # Newlines or commenting text, will start with newlines
-                    self.buf_ref.append('')
+            self.draw_filtered()
 
     @neovim.autocmd("TextChangedI", pattern='YajFilter', sync=True)
     def insert_changed(self):
@@ -180,6 +188,7 @@ class Yaj(object):
 
     @neovim.command("Yaj", range='', nargs='*', sync=True)
     def yaj(self, args, range):
+        self.hl_source = self.nvim.new_highlight_source()
         buf = self.nvim.current.buffer
         window = self.nvim.current.window
 
