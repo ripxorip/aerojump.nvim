@@ -162,8 +162,13 @@ class Yaj(object):
                 if l.matches != []:
                     self.buf_ref.append(l.raw_lower)
                     for i, m in enumerate(l.matches):
+                        continue
+                        # Debug
                         self.buf_ref.append(str(l.scores[i]))
                         self.buf_ref.append(str(m))
+                else:
+                    # Newlines or commenting text, will start with newlines
+                    self.buf_ref.append('')
 
     @neovim.autocmd("TextChangedI", pattern='YajFilter', sync=True)
     def insert_changed(self):
