@@ -179,6 +179,9 @@ class Yaj(object):
         hl = self.create_highlights()
         self.log(hl)
         self.buf_ref.update_highlights(self.hl_source, hl, clear=True)
+        # TODO cont here: create system for moving around between filter matches
+        # move based on score for each line, change highlight depending on if the marker is there
+        # yet
 
     def draw(self):
         """ Draw function of the plugin """
