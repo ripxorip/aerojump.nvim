@@ -95,6 +95,8 @@ class YajLine(object):
         # shall be used to filter out from 'exp explorere explorer'
         # shall filter out whole words (which shall be prioritized)
 
+        # increase score the more consecutive words thats available
+
         # self.__sort_matches(self.matches)
         # Adds the whole words filter
         # self.__find_whole_words(self.matches)
