@@ -34,30 +34,22 @@ class YajLine(object):
         self.logstr.append(str(s))
 
     def __match_from(self, matches, pattern, pat_index, word_index):
-        match = False
-
         for i in range(word_index, len(self.raw)):
             if self.raw_lower[i] == pattern[pat_index]:
                 matches.append(i+1)
-                match = True
-                matched_index = i
-                break
-
-        if match:
-            next_pat_index = pat_index + 1
-            next_word_index = matched_index + 1
-            # Final match in the pattern
-            if next_pat_index == len(pattern):
-                return True
-            # More characters to process
-            elif next_word_index < len(self.raw_lower):
-                # Recursion :)
-                return self.__match_from(matches, pattern, next_pat_index, next_word_index)
-            # No more characters left to process but pattern is complete
-            else:
-                return False
-        else:
-            return False
+                next_pat_index = pat_index + 1
+                next_word_index = i + 1
+                # Final match in the pattern
+                if next_pat_index == len(pattern):
+                    return True
+                # More characters to process
+                elif next_word_index < len(self.raw_lower):
+                    # Recursion :)
+                    return self.__match_from(matches, pattern, next_pat_index, next_word_index)
+                # No more characters left to process but pattern is complete
+                else:
+                    return False
+        return False
 
 
     def filter(self, pattern):
