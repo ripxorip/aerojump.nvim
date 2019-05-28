@@ -8,6 +8,12 @@ import neovim
 import os
 import re
 
+# Create utility function for getting output of a command.
+# Use this to set the 'multifiletype' "set filetype={res}.yaj"
+# that way syntax highlighting is preserverd even for yaj
+# this utility can be borrowed for the fetching of the tabwidth
+# too.
+
 # Utility functions
 #====================
 def python_input(nvim, message = 'input'):
