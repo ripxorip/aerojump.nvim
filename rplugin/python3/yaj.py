@@ -142,6 +142,17 @@ class Yaj(object):
             ret.append(YajLine(line, i+1))
         return ret
 
+    def create_highlights(self):
+        ret = []
+        for l in self.lines:
+            for m in l.matches:
+                # TODO optimize
+                for i in m:
+                    # TODO Fix -1 offset bug for l.num
+                    # TODO Fix offset error for tabs
+                    ret.append(('SearchResult', l.num-1, i-1, i))
+        return ret
+
     def draw_unfiltered(self):
         lines = []
         for l in self.lines:
@@ -152,24 +163,22 @@ class Yaj(object):
         self.buf_ref.clear_highlight(self.hl_source)
 
     def draw_filtered(self):
-        self.buf_ref[:] = []
+        lines = []
         for l in self.lines:
             if l.matches != []:
-                self.buf_ref.append(l.raw)
+                lines.append(l.raw)
                 for i, m in enumerate(l.matches):
                     continue
                     # Debug
-                    self.buf_ref.append(str(l.scores[i]))
-                    self.buf_ref.append(str(m))
+                    lines.append(str(l.scores[i]))
+                    lines.append(str(m))
             else:
                 # Newlines or commenting text, will start with newlines
-                self.buf_ref.append('')
-        # FIXME: Cont here, see https://neovim.io/doc/user/syntax.html for
-        # Different kind of groups, could use different kind of groups depending on
-        # score..
-        # fix offset bug!
-        self.buf_ref.update_highlights(self.hl_source, [('Include', 33, 8, 16), ('Include', 33, 21, 22), ('Include', 20, 0, 1)] ,clear=True)
-        # self.buf_ref.update_highlights(self.hl_source, [('Conditional', 33, 17, 18)] ,clear=True)
+                lines.append('')
+        self.buf_ref[:] = lines[:]
+        hl = self.create_highlights()
+        self.log(hl)
+        self.buf_ref.update_highlights(self.hl_source, hl, clear=True)
 
     def draw(self):
         """ Draw function of the plugin """
