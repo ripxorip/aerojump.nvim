@@ -250,6 +250,9 @@ class Yaj(object):
         # Also, investigate if I really need to know tab
         # stop at all? Will the cursor take care of this
         # implicitly?
+        #
+        # UPDATE: HIGHLIGHT DOES IT AUTOMATICALLY :D
+        #
         # Fetch current tabstop, moved to just in time
         # needed in order to convert character
         # position to vim position
