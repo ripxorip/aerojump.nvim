@@ -8,6 +8,9 @@ import neovim
 import os
 import re
 
+# This project will be forked to create 'aerojumper'
+# instead. Aero because of space when no matches
+
 # Create utility function for getting output of a command.
 # Use this to set the 'multifiletype' "set filetype={res}.yaj"
 # that way syntax highlighting is preserverd even for yaj
@@ -18,6 +21,12 @@ import re
 
 # Utility functions
 #====================
+def get_output_of_vim_cmd(nvim, cmd):
+    nvim.command('redir @a')
+    nvim.command(cmd)
+    nvim.command('redir END')
+    return nvim.eval('@a').strip('\n')
+
 def python_input(nvim, message = 'input'):
     nvim.command('call inputsave()')
     nvim.command("let user_input = input('" + message + ": ')")
@@ -55,17 +64,6 @@ class YajLine(object):
                     sorted_matches.append(c_match)
             self.scores.append(score/pat_len)
         return sorted_matches
-
-    def __find_whole_words(self, matches):
-        whole_words = []
-        for m in matches:
-            i = 0
-            while i < len(m) - 1 and m[i+1] - m[i] == 1:
-                i += 1
-            if i == len(m) - 1:
-                whole_words.append(m)
-        if whole_words != []:
-            matches[:] = whole_words[:]
 
     def __match_from(self, matches, pattern, pat_index, word_index):
         for i in range(word_index, len(self.raw)):
@@ -112,6 +110,8 @@ class Yaj(object):
         self.nvim = nvim
         self.logstr = []
         self.logstr.append('== Yaj debug ==')
+        # Will only be fetched when its needed
+        self.tabstop = None
 
     def log(self, s):
         self.logstr.append(str(s))
@@ -120,6 +120,8 @@ class Yaj(object):
         self.nvim.command('split Yaj')
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=yaj')
+        # Fix filetype in order to keep old syntax
+        self.nvim.command('set filetype='+self.ft+'.yaj')
 
     def open_yaj_filter_buf(self):
         self.nvim.command('e YajFilter')
@@ -221,6 +223,10 @@ class Yaj(object):
         self.top_pos = window.cursor
         self.nvim.command('normal! L')
 
+        # Sample current filetype
+        resp = get_output_of_vim_cmd(self.nvim, 'set filetype?')
+        self.ft = resp.split('=')[1]
+
         # Spawn the filter buffer
         self.open_yaj_filter_buf()
 
@@ -234,13 +240,22 @@ class Yaj(object):
         # Create lines
         self.lines = self.get_lines(new_buf)
 
-        # Fetch current tabstop
+        # FIXME: Move to only be fetched when its needed
+        # i.e. when we have tabs in the matches and we
+        # want to move the cursor there.
+        #
+        # if self.tapstop == None:
+        #     fetch_tabstop()
+        #
+        # Also, investigate if I really need to know tab
+        # stop at all? Will the cursor take care of this
+        # implicitly?
+        # Fetch current tabstop, moved to just in time
         # needed in order to convert character
         # position to vim position
-        self.nvim.command('redir @a')
-        self.nvim.command('set tabstop?')
-        self.nvim.command('redir END')
-        self.tabstop = [int(s) for s in self.nvim.eval('@a').strip('\n').split('=') if s.isdigit()][0]
+        # e.g. using a plugin variable which is fetched just in time?
+        # resp = get_output_of_vim_cmd(self.nvim, 'set tabstop?')
+        # self.tabstop = [int(s) for s in resp.split('=') if s.isdigit()][0]
 
         # Reference to the text buffer
         self.buf_ref = new_buf
