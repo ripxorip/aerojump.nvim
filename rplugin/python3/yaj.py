@@ -97,7 +97,6 @@ class YajLine(object):
         # matches = matches.sort(key=len, reverse=True)
 
 
-
 @neovim.plugin
 class Yaj(object):
     def __init__(self, nvim):
@@ -116,11 +115,13 @@ class Yaj(object):
         self.nvim.command('setlocal filetype=yaj')
         # Fix filetype in order to keep old syntax
         self.nvim.command('set filetype='+self.ft+'.yaj')
+        self.yaj_buf_num = self.nvim.current.buffer.number
 
     def open_yaj_filter_buf(self):
         self.nvim.command('e YajFilter')
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=YajFilter')
+        self.filt_buf_num = self.nvim.current.buffer.number
 
     def set_original_cursor_position(self):
         old_win = self.nvim.current.window
@@ -196,6 +197,16 @@ class Yaj(object):
         else:
             self.draw_filtered()
 
+    def create_keymap(self):
+        self.nvim.command("inoremap <buffer> <C-h> <ESC>:YajSelPrev<CR>")
+        self.nvim.command("inoremap <buffer> <C-j> <ESC>:YajDown<CR>")
+        self.nvim.command("inoremap <buffer> <C-k> <ESC>:YajUp<CR>")
+        self.nvim.command("inoremap <buffer> <C-l> <ESC>:YajSelNext<CR>")
+        self.nvim.command("inoremap <buffer> <C-q> <ESC>:YajExit<CR>")
+        self.nvim.command("inoremap <buffer> <ESC> <ESC>:YajExit<CR>")
+        self.nvim.command("inoremap <buffer> <ret> <ESC>:YajSelect<CR>")
+        self.nvim.command("inoremap <buffer> <C-<space>> <ESC>:YajSelect<CR>")
+
     @neovim.autocmd("TextChangedI", pattern='YajFilter', sync=True)
     def insert_changed(self):
         """ Process filter input """
@@ -207,7 +218,7 @@ class Yaj(object):
     @neovim.command("Yaj", range='', nargs='*', sync=True)
     def yaj(self, args, range):
         self.hl_source = self.nvim.new_highlight_source()
-        buf = self.nvim.current.buffer
+        self.og_buf = self.nvim.current.buffer
         window = self.nvim.current.window
 
         # Height could be used to optimize performance?
@@ -215,6 +226,7 @@ class Yaj(object):
 
         # Sample positions
         self.current_pos = window.cursor
+        self.og_pos = window.cursor
         self.nvim.command('normal! H')
         self.top_pos = window.cursor
         self.nvim.command('normal! L')
@@ -231,7 +243,7 @@ class Yaj(object):
 
         new_buf = self.nvim.current.buffer
         # Paste the lines of the old buffer to the new
-        new_buf[:] = buf[:]
+        new_buf[:] = self.og_buf[:]
 
         # Create lines
         self.lines = self.get_lines(new_buf)
@@ -272,7 +284,12 @@ class Yaj(object):
         self.draw()
         self.set_original_cursor_position()
 
-    @neovim.command("YayShowLog", range='', nargs='*', sync=True)
+        # Create keymap
+        self.create_keymap()
+
+    # Yaj Commands
+    #====================
+    @neovim.command("YajShowLog", range='', nargs='*', sync=True)
     def YajShowLog(self, args, range):
         self.nvim.command('e Yaj_log')
         self.nvim.command('setlocal buftype=nofile')
@@ -282,4 +299,50 @@ class Yaj(object):
         #for i in self.lines:
             # Add log for each line
         #    self.nvim.current.buffer.append(i.logstr)
+
+    @neovim.command("YajUp", range='', nargs='*', sync=True)
+    def YajUp(self, args, range):
+        #FIXME Implement
+        self.log('YajUp')
+        self.nvim.command('startinsert')
+        self.nvim.command('normal! $')
+
+    @neovim.command("YajDown", range='', nargs='*', sync=True)
+    def YajDown(self, args, range):
+        #FIXME Implement
+        self.log('YajDown')
+        self.nvim.command('startinsert')
+        self.nvim.command('normal! $')
+
+    @neovim.command("YajSelNext", range='', nargs='*', sync=True)
+    def YajSelNext(self, args, range):
+        #FIXME Implement
+        self.log('YajSelNext')
+        self.nvim.command('startinsert')
+        self.nvim.command('normal! $')
+
+    @neovim.command("YajSelPrev", range='', nargs='*', sync=True)
+    def YajSelPrev(self, args, range):
+        #FIXME Implement
+        self.log('YajSelPrev')
+        self.nvim.command('startinsert')
+        self.nvim.command('normal! $')
+
+    @neovim.command("YajSelect", range='', nargs='*', sync=True)
+    def YajSelect(self, args, range):
+        #FIXME Implement
+        self.log('YajSelect')
+
+    @neovim.command("YajExit", range='', nargs='*', sync=True)
+    def YajExit(self, args, range):
+        self.log('YajExit')
+        self.nvim.command('stopinsert')
+        self.nvim.current.buffer = self.og_buf
+        self.nvim.command('bd %s' % self.yaj_buf_num)
+        self.nvim.command('bd %s' % self.filt_buf_num)
+        # Restore original position
+        self.nvim.current.window.cursor = self.top_pos
+        self.nvim.command('normal! zt')
+        diff = self.og_pos[0] - self.top_pos[0]
+        self.nvim.command('normal! %dj' % (diff))
 
