@@ -11,13 +11,7 @@ import re
 # This project will be forked to create 'aerojumper'
 # instead. Aero because of space when no matches
 
-# Create utility function for getting output of a command.
-# Use this to set the 'multifiletype' "set filetype={res}.yaj"
-# that way syntax highlighting is preserverd even for yaj
-# this utility can be borrowed for the fetching of the tabwidth
-# too.
-
-# Add support for different kind of modes too..
+# Add support for different kind of _modes_ too..
 
 # Utility functions
 #====================
@@ -141,6 +135,8 @@ class Yaj(object):
     def apply_filter(self, filter_string):
         for l in self.lines:
             l.filter(filter_string)
+            continue
+            # Debug below
             if l.matches != []:
                 self.log(l.raw)
             for m in l.matches:
@@ -159,7 +155,7 @@ class Yaj(object):
                 # TODO optimize
                 for i in m:
                     # TODO Fix -1 offset bug for l.num
-                    # TODO Fix offset error for tabs
+                    # TODO Fix offset error for tabs, (may already be solved)
                     ret.append(('SearchResult', l.num-1, i-1, i))
         return ret
 
@@ -168,6 +164,7 @@ class Yaj(object):
         for l in self.lines:
             lines.append(l.raw)
         self.buf_ref[:] = lines[:]
+        self.log('Unfiltered')
         # Reset original cursor position
         self.set_original_cursor_position()
         self.buf_ref.clear_highlight(self.hl_source)
@@ -187,7 +184,6 @@ class Yaj(object):
                 lines.append('')
         self.buf_ref[:] = lines[:]
         hl = self.create_highlights()
-        self.log(hl)
         self.buf_ref.update_highlights(self.hl_source, hl, clear=True)
         # TODO cont here: create system for moving around between filter matches
         # move based on score for each line, change highlight depending on if the marker is there
