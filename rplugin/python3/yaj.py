@@ -176,7 +176,7 @@ class Yaj(object):
         l = self.filtered_lines[self.line_filt_index]
         return (l.num, l.matches[self.line_match_index][0]-1)
 
-    def best_score_for(self, line):
+    def best_match_index_for(self, line):
         ret = 0
         for i in range(0, len(line.matches)):
             if line.scores[i] > line.scores[ret]:
@@ -185,12 +185,17 @@ class Yaj(object):
 
     def best_match_for(self, lines):
         line = lines[0]
-        s_index = self.best_score_for(line)
+        s_index = self.best_match_index_for(line)
         score = line.scores[s_index]
 
         for l in lines:
-            hyp_s_index = self.best_score_for(l)
-            if l.scores[hyp_s_index] > score:
+            hyp_s_index = self.best_match_index_for(l)
+            # Larger score
+            if ((l.scores[hyp_s_index] > score) or
+                # Same score
+                ((l.scores[hyp_s_index] == score) and
+                # But closer to the current cursor
+                (abs(self.current_pos[0] - l.num) < abs(self.current_pos[0]-line.num)))):
                 score = l.scores[hyp_s_index]
                 s_index = hyp_s_index
                 line = l
