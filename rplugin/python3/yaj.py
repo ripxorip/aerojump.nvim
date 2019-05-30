@@ -129,17 +129,18 @@ class Yaj(object):
         self.nvim.current.window.cursor = self.top_pos
         self.nvim.command('normal! zt')
 
-        diff = self.current_pos[0] - self.top_pos[0]
+        diff = self.og_pos[0] - self.top_pos[0]
         self.nvim.command('normal! %dj' % (diff))
         self.nvim.current.window = old_win
 
     def apply_filter(self, filter_string):
+        self.filtered_lines = []
         for l in self.lines:
             l.filter(filter_string)
-            continue
-            # Debug below
             if l.matches != []:
-                self.log(l.raw)
+                self.filtered_lines.append(l)
+                # self.log(l.raw)
+            continue
             for m in l.matches:
                 self.log(str(m))
 
@@ -159,6 +160,69 @@ class Yaj(object):
                     # TODO Fix offset error for tabs, (may already be solved)
                     ret.append(('SearchResult', l.num-1, i-1, i))
         return ret
+
+    def best_score_for(self, line):
+        ret = 0
+        for i in range(0, len(line.matches)):
+            if line.scores[i] > line.scores[ret]:
+                ret = i
+        return ret
+
+    def best_match_for(self, lines):
+        line = lines[0]
+        s_index = self.best_score_for(line)
+        score = line.scores[s_index]
+
+        for l in lines:
+            hyp_s_index = self.best_score_for(l)
+            if l.scores[hyp_s_index] > score:
+                score = l.scores[hyp_s_index]
+                s_index = hyp_s_index
+                line = l
+        return (line.num, line.matches[s_index][0])
+
+    def update_cursor(self):
+        # Get information for the currently visible lines
+        visible_start = self.top_pos[0]
+        visible_end = visible_start + self.window_height # Might be -1?
+
+        # Get visible matches
+        visible_matches = [l for l in self.filtered_lines if l.num >= visible_start and l.num <= visible_end]
+        if visible_matches != []:
+            return self.best_match_for(visible_matches)
+        else:
+            return self.best_match_for(self.filtered_lines)
+
+    def _update_cursor(self):
+        # Different kind of matching, different mode?
+        # Saved for reference
+        # Get information for the currently visible lines
+        visible_start = self.top_pos[0]
+        visible_end = visible_start + self.window_height # Might be -1?
+
+        # Might also be - 1?
+        current_line = self.current_pos[0]
+
+        # Find current_line in line
+        found_line = False
+        num_matches = len(self.filtered_lines)
+        if num_matches == 0:
+            # No matches
+            return
+
+        filt_index = 0
+        if self.filtered_lines[filt_index].num >= current_line:
+            found_line = True
+        else:
+            for i in range(0, len(self.filtered_lines)-1):
+                if self.filtered_lines[i].num <= current_line and self.filtered_lines[i+1].num > current_line:
+                    found_line = True
+                    filt_index = i
+        if not found_line:
+            self.log('ERROR! SHOULD HAVE FOUND A LINE BY NOW')
+            return
+
+        return (0, 0)
 
     def draw_unfiltered(self):
         lines = []
@@ -186,9 +250,12 @@ class Yaj(object):
         self.buf_ref[:] = lines[:]
         hl = self.create_highlights()
         self.buf_ref.update_highlights(self.hl_source, hl, clear=True)
+
         # TODO cont here: create system for moving around between filter matches
         # move based on score for each line, change highlight depending on if the marker is there
         # yet
+        cursor_pos = self.update_cursor()
+        self.main_win.cursor = cursor_pos
 
     def draw(self):
         """ Draw function of the plugin """
@@ -222,7 +289,7 @@ class Yaj(object):
         window = self.nvim.current.window
 
         # Height could be used to optimize performance?
-        window_height = window.height
+        self.window_height = window.height
 
         # Sample positions
         self.current_pos = window.cursor
