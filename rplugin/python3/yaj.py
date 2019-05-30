@@ -284,7 +284,8 @@ class Yaj(object):
                     lines.append(str(m))
             else:
                 # Newlines or commenting text, will start with newlines
-                lines.append('')
+                # lines.append('') # Spaces could be used in a 'focus' mode
+                lines.append(l.raw) # Standard VIMish mode
         self.buf_ref[:] = lines[:]
         if self.has_filter:
             cursor_pos = self.update_cursor()
