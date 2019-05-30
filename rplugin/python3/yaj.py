@@ -336,26 +336,6 @@ class Yaj(object):
         # Create lines
         self.lines = self.get_lines(new_buf)
 
-        # FIXME: Move to only be fetched when its needed
-        # i.e. when we have tabs in the matches and we
-        # want to move the cursor there.
-        #
-        # if self.tapstop == None:
-        #     fetch_tabstop()
-        #
-        # Also, investigate if I really need to know tab
-        # stop at all? Will the cursor take care of this
-        # implicitly?
-        #
-        # UPDATE: HIGHLIGHT DOES IT AUTOMATICALLY :D
-        #
-        # Fetch current tabstop, moved to just in time
-        # needed in order to convert character
-        # position to vim position
-        # e.g. using a plugin variable which is fetched just in time?
-        # resp = get_output_of_vim_cmd(self.nvim, 'set tabstop?')
-        # self.tabstop = [int(s) for s in resp.split('=') if s.isdigit()][0]
-
         # Reference to the text buffer
         self.buf_ref = new_buf
 
