@@ -283,9 +283,13 @@ class Yaj(object):
 
     def create_keymap(self):
         self.nvim.command("inoremap <buffer> <C-h> <ESC>:YajSelPrev<CR>")
+        self.nvim.command("inoremap <buffer> <Left> <ESC>:YajSelPrev<CR>")
         self.nvim.command("inoremap <buffer> <C-j> <ESC>:YajDown<CR>")
+        self.nvim.command("inoremap <buffer> <Down> <ESC>:YajDown<CR>")
         self.nvim.command("inoremap <buffer> <C-k> <ESC>:YajUp<CR>")
+        self.nvim.command("inoremap <buffer> <Up> <ESC>:YajUp<CR>")
         self.nvim.command("inoremap <buffer> <C-l> <ESC>:YajSelNext<CR>")
+        self.nvim.command("inoremap <buffer> <Right> <ESC>:YajSelNext<CR>")
         self.nvim.command("inoremap <buffer> <C-q> <ESC>:YajExit<CR>")
         self.nvim.command("inoremap <buffer> <ESC> <ESC>:YajExit<CR>")
         self.nvim.command("inoremap <buffer> <CR> <ESC>:YajSelect<CR>")
