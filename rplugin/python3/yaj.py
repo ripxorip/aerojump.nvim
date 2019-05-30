@@ -161,7 +161,15 @@ class Yaj(object):
             ret.append(YajLine(line, i+1))
         return ret
 
-    def create_highlights(self):
+    def create_cursor_highlight(self):
+        ret = []
+        l = self.filtered_lines[self.line_filt_index]
+        matches = l.matches[self.line_match_index]
+        for m in matches:
+            ret.append(('SearchHighlight', l.num-1, m-1, m))
+        return ret
+
+    def create_matches_highlights(self):
         ret = []
         for l in self.lines:
             for m in l.matches:
@@ -257,6 +265,13 @@ class Yaj(object):
         self.set_original_cursor_position()
         self.buf_ref.clear_highlight(self.hl_source)
 
+    def update_highlights(self):
+        hl = self.create_matches_highlights()
+        if self.has_filter:
+            cursor_hl = self.create_cursor_highlight()
+            for i in cursor_hl: hl.append(i)
+        self.buf_ref.update_highlights(self.hl_source, hl, clear=True)
+
     def draw_filtered(self):
         lines = []
         for l in self.lines:
@@ -271,13 +286,11 @@ class Yaj(object):
                 # Newlines or commenting text, will start with newlines
                 lines.append('')
         self.buf_ref[:] = lines[:]
-        hl = self.create_highlights()
-        self.buf_ref.update_highlights(self.hl_source, hl, clear=True)
-
         if self.has_filter:
             cursor_pos = self.update_cursor()
             # TODO Change highlight for the current selection
             self.main_win.cursor = cursor_pos
+        self.update_highlights()
 
     def draw(self):
         """ Draw function of the plugin """
@@ -310,6 +323,7 @@ class Yaj(object):
 
     @neovim.command("Yaj", range='', nargs='*', sync=True)
     def yaj(self, args, range):
+        self.has_filter = False
         self.hl_source = self.nvim.new_highlight_source()
         self.og_buf = self.nvim.current.buffer
         window = self.nvim.current.window
@@ -382,6 +396,7 @@ class Yaj(object):
         self.line_match_index = 0
         if self.has_filter > 0:
             self.main_win.cursor = self.get_current_cursor()
+            self.update_highlights()
 
         self.nvim.command('startinsert')
         self.nvim.command('normal! $')
@@ -395,6 +410,7 @@ class Yaj(object):
         self.line_match_index = 0
         if self.has_filter:
             self.main_win.cursor = self.get_current_cursor()
+            self.update_highlights()
 
         self.nvim.command('startinsert')
         self.nvim.command('normal! $')
@@ -409,6 +425,7 @@ class Yaj(object):
             self.nvim.command('normal! $')
         if self.has_filter > 0:
             self.main_win.cursor = self.get_current_cursor()
+            self.update_highlights()
 
     @neovim.command("YajSelPrev", range='', nargs='*', sync=True)
     def YajSelPrev(self, args, range):
@@ -420,13 +437,17 @@ class Yaj(object):
             self.nvim.command('normal! $')
         if self.has_filter > 0:
             self.main_win.cursor = self.get_current_cursor()
+            self.update_highlights()
 
     @neovim.command("YajSelect", range='', nargs='*', sync=True)
     def YajSelect(self, args, range):
         # TODO Add to regular vim search for further highlights
         # being able to step to next etc
         # i.e. select current word
-        pos = self.get_current_cursor()
+        if self.has_filter:
+            pos = self.get_current_cursor()
+        else:
+            pos = self.current_pos
         self.YajExit('', '')
         self.nvim.current.window.cursor = pos
 
