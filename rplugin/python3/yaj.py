@@ -10,8 +10,15 @@ import re
 
 # This project will be forked to create 'aerojumper'
 # instead. Aero because of space when no matches
-
 # Add support for different kind of _modes_ too..
+
+# Cool idea:
+# Only delete with space if its in the visible range,
+# otherwise use 'commented' highlights for results
+# that way it can be a good searcher too. Also rethink
+# if I want to match in another way when its not visible.
+
+# Also prioritize close to cursor if tie between scores
 
 # Utility functions
 #====================
@@ -135,14 +142,18 @@ class Yaj(object):
 
     def apply_filter(self, filter_string):
         self.filtered_lines = []
+        filt_index = 0
         for l in self.lines:
             l.filter(filter_string)
             if l.matches != []:
+                l.filt_index = filt_index
                 self.filtered_lines.append(l)
+                filt_index += 1
                 # self.log(l.raw)
             continue
             for m in l.matches:
                 self.log(str(m))
+        self.has_filter = len(self.filtered_lines) > 0
 
     def get_lines(self, lines):
         ret = []
@@ -160,6 +171,10 @@ class Yaj(object):
                     # TODO Fix offset error for tabs, (may already be solved)
                     ret.append(('SearchResult', l.num-1, i-1, i))
         return ret
+
+    def get_current_cursor(self):
+        l = self.filtered_lines[self.line_filt_index]
+        return (l.num, l.matches[self.line_match_index][0]-1)
 
     def best_score_for(self, line):
         ret = 0
@@ -179,7 +194,10 @@ class Yaj(object):
                 score = l.scores[hyp_s_index]
                 s_index = hyp_s_index
                 line = l
-        return (line.num, line.matches[s_index][0])
+        # Update internal indices
+        self.line_filt_index = line.filt_index
+        self.line_match_index = s_index
+        return self.get_current_cursor()
 
     def update_cursor(self):
         # Get information for the currently visible lines
@@ -251,11 +269,10 @@ class Yaj(object):
         hl = self.create_highlights()
         self.buf_ref.update_highlights(self.hl_source, hl, clear=True)
 
-        # TODO cont here: create system for moving around between filter matches
-        # move based on score for each line, change highlight depending on if the marker is there
-        # yet
-        cursor_pos = self.update_cursor()
-        self.main_win.cursor = cursor_pos
+        if self.has_filter:
+            cursor_pos = self.update_cursor()
+            # TODO Change highlight for the current selection
+            self.main_win.cursor = cursor_pos
 
     def draw(self):
         """ Draw function of the plugin """
@@ -271,8 +288,8 @@ class Yaj(object):
         self.nvim.command("inoremap <buffer> <C-l> <ESC>:YajSelNext<CR>")
         self.nvim.command("inoremap <buffer> <C-q> <ESC>:YajExit<CR>")
         self.nvim.command("inoremap <buffer> <ESC> <ESC>:YajExit<CR>")
-        self.nvim.command("inoremap <buffer> <ret> <ESC>:YajSelect<CR>")
-        self.nvim.command("inoremap <buffer> <C-<space>> <ESC>:YajSelect<CR>")
+        self.nvim.command("inoremap <buffer> <CR> <ESC>:YajSelect<CR>")
+        self.nvim.command("inoremap <buffer> <C-Space> <ESC>:YajSelect<CR>")
 
     @neovim.autocmd("TextChangedI", pattern='YajFilter', sync=True)
     def insert_changed(self):
@@ -369,36 +386,60 @@ class Yaj(object):
 
     @neovim.command("YajUp", range='', nargs='*', sync=True)
     def YajUp(self, args, range):
-        #FIXME Implement
-        self.log('YajUp')
+        self.line_filt_index -= 1
+        if self.line_filt_index < 0:
+            self.line_filt_index = 0
+
+        self.line_match_index = 0
+        if self.has_filter > 0:
+            self.main_win.cursor = self.get_current_cursor()
+
         self.nvim.command('startinsert')
         self.nvim.command('normal! $')
 
     @neovim.command("YajDown", range='', nargs='*', sync=True)
     def YajDown(self, args, range):
-        #FIXME Implement
-        self.log('YajDown')
+        self.line_filt_index += 1
+        if self.line_filt_index >= len(self.filtered_lines):
+            self.line_filt_index = len(self.filtered_lines) - 1
+
+        self.line_match_index = 0
+        if self.has_filter:
+            self.main_win.cursor = self.get_current_cursor()
+
         self.nvim.command('startinsert')
         self.nvim.command('normal! $')
 
     @neovim.command("YajSelNext", range='', nargs='*', sync=True)
     def YajSelNext(self, args, range):
-        #FIXME Implement
-        self.log('YajSelNext')
-        self.nvim.command('startinsert')
-        self.nvim.command('normal! $')
+        self.line_match_index += 1
+        if self.has_filter and self.line_match_index >= len(self.filtered_lines[self.line_filt_index].matches):
+            self.YajDown('', '')
+        else:
+            self.nvim.command('startinsert')
+            self.nvim.command('normal! $')
+        if self.has_filter > 0:
+            self.main_win.cursor = self.get_current_cursor()
 
     @neovim.command("YajSelPrev", range='', nargs='*', sync=True)
     def YajSelPrev(self, args, range):
-        #FIXME Implement
-        self.log('YajSelPrev')
-        self.nvim.command('startinsert')
-        self.nvim.command('normal! $')
+        self.line_match_index -= 1
+        if self.line_match_index < 0:
+            self.YajUp('', '')
+        else:
+            self.nvim.command('startinsert')
+            self.nvim.command('normal! $')
+        if self.has_filter > 0:
+            self.main_win.cursor = self.get_current_cursor()
 
     @neovim.command("YajSelect", range='', nargs='*', sync=True)
     def YajSelect(self, args, range):
-        #FIXME Implement
-        self.log('YajSelect')
+        # TODO Add to regular vim search for further highlights
+        # being able to step to next etc
+        # i.e. select current word
+        pos = self.get_current_cursor()
+        self.YajExit('', '')
+        self.nvim.current.window.cursor = pos
 
     @neovim.command("YajExit", range='', nargs='*', sync=True)
     def YajExit(self, args, range):
