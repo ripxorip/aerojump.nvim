@@ -1,5 +1,5 @@
 # ============================================================================
-# FILE: yaj.py
+# FILE: aerojump.py
 # AUTHOR: Philip Karlsson <philipkarlsson at me.com>
 # License: MIT license
 # ============================================================================
@@ -8,9 +8,7 @@ import neovim
 import os
 import re
 
-# This project will be forked to create 'aerojumper'
-# instead. Aero because of space when no matches
-# Add support for different kind of _modes_ too..
+# Add support for different kind of _modes_
 
 # Cool idea:
 # Only delete with space if its in the visible range,
@@ -28,16 +26,10 @@ def get_output_of_vim_cmd(nvim, cmd):
     nvim.command('redir END')
     return nvim.eval('@a').strip('\n')
 
-def python_input(nvim, message = 'input'):
-    nvim.command('call inputsave()')
-    nvim.command("let user_input = input('" + message + ": ')")
-    nvim.command('call inputrestore()')
-    return nvim.eval('user_input')
-
 # Utility classes
 #====================
-class YajLine(object):
-    """ Class for a line in a yaj buffer """
+class AerojumpLine(object):
+    """ Class for a line in a aerojump buffer """
     def __init__(self, line, num):
         # Raw text
         self.raw = line
@@ -105,7 +97,7 @@ class YajLine(object):
 
 
 @neovim.plugin
-class Yaj(object):
+class Aerojump(object):
     def __init__(self, nvim):
         self.nvim = nvim
         self.logstr = []
@@ -116,15 +108,15 @@ class Yaj(object):
     def log(self, s):
         self.logstr.append(str(s))
 
-    def open_yaj_buf(self):
+    def open_aerojump_buf(self):
         self.nvim.command('split Aerojump')
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=aerojump')
         # Fix filetype in order to keep old syntax
         self.nvim.command('set filetype='+self.ft+'.aerojump')
-        self.yaj_buf_num = self.nvim.current.buffer.number
+        self.aerojump_buf_num = self.nvim.current.buffer.number
 
-    def open_yaj_filter_buf(self):
+    def open_aerojump_filter_buf(self):
         self.nvim.command('e AerojumpFilter')
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=AerojumpFilter')
@@ -158,7 +150,7 @@ class Yaj(object):
     def get_lines(self, lines):
         ret = []
         for i, line in enumerate(lines):
-            ret.append(YajLine(line, i+1))
+            ret.append(AerojumpLine(line, i+1))
         return ret
 
     def create_cursor_highlight(self):
@@ -301,18 +293,18 @@ class Yaj(object):
             self.draw_filtered()
 
     def create_keymap(self):
-        self.nvim.command("inoremap <buffer> <C-h> <ESC>:YajSelPrev<CR>")
-        self.nvim.command("inoremap <buffer> <Left> <ESC>:YajSelPrev<CR>")
-        self.nvim.command("inoremap <buffer> <C-j> <ESC>:YajDown<CR>")
-        self.nvim.command("inoremap <buffer> <Down> <ESC>:YajDown<CR>")
-        self.nvim.command("inoremap <buffer> <C-k> <ESC>:YajUp<CR>")
-        self.nvim.command("inoremap <buffer> <Up> <ESC>:YajUp<CR>")
-        self.nvim.command("inoremap <buffer> <C-l> <ESC>:YajSelNext<CR>")
-        self.nvim.command("inoremap <buffer> <Right> <ESC>:YajSelNext<CR>")
-        self.nvim.command("inoremap <buffer> <C-q> <ESC>:YajExit<CR>")
-        self.nvim.command("inoremap <buffer> <ESC> <ESC>:YajExit<CR>")
-        self.nvim.command("inoremap <buffer> <CR> <ESC>:YajSelect<CR>")
-        self.nvim.command("inoremap <buffer> <C-Space> <ESC>:YajSelect<CR>")
+        self.nvim.command("inoremap <buffer> <C-h> <ESC>:AerojumpSelPrev<CR>")
+        self.nvim.command("inoremap <buffer> <Left> <ESC>:AerojumpSelPrev<CR>")
+        self.nvim.command("inoremap <buffer> <C-j> <ESC>:AerojumpDown<CR>")
+        self.nvim.command("inoremap <buffer> <Down> <ESC>:AerojumpDown<CR>")
+        self.nvim.command("inoremap <buffer> <C-k> <ESC>:AerojumpUp<CR>")
+        self.nvim.command("inoremap <buffer> <Up> <ESC>:AerojumpUp<CR>")
+        self.nvim.command("inoremap <buffer> <C-l> <ESC>:AerojumpSelNext<CR>")
+        self.nvim.command("inoremap <buffer> <Right> <ESC>:AerojumpSelNext<CR>")
+        self.nvim.command("inoremap <buffer> <C-q> <ESC>:AerojumpExit<CR>")
+        self.nvim.command("inoremap <buffer> <ESC> <ESC>:AerojumpExit<CR>")
+        self.nvim.command("inoremap <buffer> <CR> <ESC>:AerojumpSelect<CR>")
+        self.nvim.command("inoremap <buffer> <C-Space> <ESC>:AerojumpSelect<CR>")
 
     @neovim.autocmd("TextChangedI", pattern='AerojumpFilter', sync=True)
     def insert_changed(self):
@@ -322,8 +314,8 @@ class Yaj(object):
             self.apply_filter(self.filter_string)
         self.draw()
 
-    @neovim.command("Yaj", range='', nargs='*', sync=True)
-    def yaj(self, args, range):
+    @neovim.command("Aerojump", range='', nargs='*', sync=True)
+    def Aerojump(self, args, range):
         self.has_filter = False
         self.hl_source = self.nvim.new_highlight_source()
         self.og_buf = self.nvim.current.buffer
@@ -344,10 +336,10 @@ class Yaj(object):
         self.ft = resp.split('=')[1]
 
         # Spawn the filter buffer
-        self.open_yaj_filter_buf()
+        self.open_aerojump_filter_buf()
 
-        # Spawn the yaj buffer
-        self.open_yaj_buf()
+        # Spawn the aerojump buffer
+        self.open_aerojump_buf()
 
         new_buf = self.nvim.current.buffer
         # Paste the lines of the old buffer to the new
@@ -375,21 +367,21 @@ class Yaj(object):
         # Create keymap
         self.create_keymap()
 
-    # Yaj Commands
+    # Aerojump Commands
     #====================
-    @neovim.command("YajShowLog", range='', nargs='*', sync=True)
-    def YajShowLog(self, args, range):
-        self.nvim.command('e Yaj_log')
+    @neovim.command("AerojumpShowLog", range='', nargs='*', sync=True)
+    def AerojumpShowLog(self, args, range):
+        self.nvim.command('e Aerojump_log')
         self.nvim.command('setlocal buftype=nofile')
-        self.nvim.command('setlocal filetype=yaj_log')
+        self.nvim.command('setlocal filetype=aerojump_log')
         self.nvim.current.buffer.append(self.logstr)
         #self.nvim.current.buffer.append('== Lines Log ==')
         #for i in self.lines:
             # Add log for each line
         #    self.nvim.current.buffer.append(i.logstr)
 
-    @neovim.command("YajUp", range='', nargs='*', sync=True)
-    def YajUp(self, args, range):
+    @neovim.command("AerojumpUp", range='', nargs='*', sync=True)
+    def AerojumpUp(self, args, range):
         self.line_filt_index -= 1
         if self.line_filt_index < 0:
             self.line_filt_index = 0
@@ -402,8 +394,8 @@ class Yaj(object):
         self.nvim.command('startinsert')
         self.nvim.command('normal! $')
 
-    @neovim.command("YajDown", range='', nargs='*', sync=True)
-    def YajDown(self, args, range):
+    @neovim.command("AerojumpDown", range='', nargs='*', sync=True)
+    def AerojumpDown(self, args, range):
         self.line_filt_index += 1
         if self.line_filt_index >= len(self.filtered_lines):
             self.line_filt_index = len(self.filtered_lines) - 1
@@ -416,11 +408,11 @@ class Yaj(object):
         self.nvim.command('startinsert')
         self.nvim.command('normal! $')
 
-    @neovim.command("YajSelNext", range='', nargs='*', sync=True)
-    def YajSelNext(self, args, range):
+    @neovim.command("AerojumpSelNext", range='', nargs='*', sync=True)
+    def AerojumpSelNext(self, args, range):
         self.line_match_index += 1
         if self.has_filter and self.line_match_index >= len(self.filtered_lines[self.line_filt_index].matches):
-            self.YajDown('', '')
+            self.AerojumpDown('', '')
         else:
             self.nvim.command('startinsert')
             self.nvim.command('normal! $')
@@ -428,11 +420,11 @@ class Yaj(object):
             self.main_win.cursor = self.get_current_cursor()
             self.update_highlights()
 
-    @neovim.command("YajSelPrev", range='', nargs='*', sync=True)
-    def YajSelPrev(self, args, range):
+    @neovim.command("AerojumpSelPrev", range='', nargs='*', sync=True)
+    def AerojumpSelPrev(self, args, range):
         self.line_match_index -= 1
         if self.line_match_index < 0:
-            self.YajUp('', '')
+            self.AerojumpUp('', '')
         else:
             self.nvim.command('startinsert')
             self.nvim.command('normal! $')
@@ -440,8 +432,8 @@ class Yaj(object):
             self.main_win.cursor = self.get_current_cursor()
             self.update_highlights()
 
-    @neovim.command("YajSelect", range='', nargs='*', sync=True)
-    def YajSelect(self, args, range):
+    @neovim.command("AerojumpSelect", range='', nargs='*', sync=True)
+    def AerojumpSelect(self, args, range):
         # TODO Add to regular vim search for further highlights
         # being able to step to next etc
         # i.e. select current word
@@ -449,15 +441,15 @@ class Yaj(object):
             pos = self.get_current_cursor()
         else:
             pos = self.current_pos
-        self.YajExit('', '')
+        self.AerojumpExit('', '')
         self.nvim.current.window.cursor = pos
 
-    @neovim.command("YajExit", range='', nargs='*', sync=True)
-    def YajExit(self, args, range):
-        self.log('YajExit')
+    @neovim.command("AerojumpExit", range='', nargs='*', sync=True)
+    def AerojumpExit(self, args, range):
+        self.log('AerojumpExit')
         self.nvim.command('stopinsert')
         self.nvim.current.buffer = self.og_buf
-        self.nvim.command('bd %s' % self.yaj_buf_num)
+        self.nvim.command('bd %s' % self.aerojump_buf_num)
         self.nvim.command('bd %s' % self.filt_buf_num)
         # Restore original position
         self.nvim.current.window.cursor = self.top_pos
