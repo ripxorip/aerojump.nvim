@@ -1,3 +1,76 @@
-# Aerojump
+# Aerojump.nvim
 
-Fuzzy match/Searcher/Jumper
+Aerojump is fuzzy-match searcher/jumper for Neovim. Its goal is to enable fast
+navigation through searching using the keyboard. It features several modes
+which can be used depending on your needs. By using an intelligent score
+system it will move the cursor to the best match based on your input.
+
+## Demo
+
+Coming soon...
+
+## Installation
+
+**Note:** aerojump.nvim requires Neovim(latest is recommended) with Python3 enabled.
+See [requirements](#requirements) if you aren't sure whether you have this.
+
+```vim
+" Install plugin using (in this example using VimPlug)
+
+call plug#begin()
+
+Plug 'philip-karlsson/aerojump.nvim', { 'do': ':UpdateRemotePlugins' }
+
+call plug#end()
+
+" Create mappings (with leader)
+nmap <Leader>aa <Plug>(AerojumpDefault)
+
+" Create mappings (without leader)
+nnoremap <Space> :Aerojump <CR>
+```
+
+## Usage
+
+Invoke aerojump in the desired mode. Start typing some characters that matches
+where you will go and finish the query by pressing either <Enter> (to go there)
+or escape to return to where you were in the buffer before.
+
+### Keybindings
+| Command               | Action                                                                                |
+| ---                   | ---                                                                                   |
+| `enter`               | Move cursor to selected result
+| `esc`                 | Exit aerojump (cursor moves back to original position)
+| `Ctrl-j/k`            | Navigate line wise (up/down)
+| `Ctrl-h/l`            | Navigate match wise (next/previous)
+| `Ctrl-w`              | Clear the filter                                                                      |
+| `C-space`             | Move cursor to selected result
+
+## Self-Promotion
+Like aerojump.nvim? Make sure to follow the repository and why not leave a star.
+
+## Contributors
+- Philip Karlsson
+
+## License
+MIT License
+
+Copyright (c) 2019 Philip Karlsson Gisslow
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

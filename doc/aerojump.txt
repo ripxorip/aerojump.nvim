@@ -1,1 +1,81 @@
-Yet another jumper
+*aerojump.txt* A fuzzy-match searcher/jumper for Neovim
+
+Author:     Philip Karlsson Gisslow <philipkarlsson@me.com>
+Source:     https://github.com/philip-karlsson/aerojump.nvim
+Version:    0.0.1
+
+==============================================================================
+Contents                                                      *aerojump-contents*
+
+    1. Introduction .................... |aerojump-introduction|
+    2. Usage ........................... |aerojump-usage|
+    3. Configuration ................... |aerojump-configuration|
+    4. Contributing .................... |aerojump-contributing|
+        4.1. Issues .................... |aerojump-issues|
+        4.2. Pull requests ............. |aerojump-pulls|
+    5. Changelog ....................... |aerojump-changelog|
+    6. License ......................... |aerojump-license|
+
+==============================================================================
+1. Introduction                                           *aerojump-introduction*
+
+Aerojump is fuzzy-match searcher/jumper for Neovim. Its goal is to enable fast
+navigation through searching using the keyboard. It features several modes
+which can be used depending on your needs. By using an intelligent score
+system it will move the cursor to the best match based on your input.
+
+==============================================================================
+2. Usage                                                         *aerojump-usage*
+
+Invoke aerojump in the desired mode. Start typing some characters that matches
+where you will go and finish the query by pressing either <Enter> (to go there)
+or escape to return to where you were in the buffer before.
+
+In order to invoke aerojump, add the following into your config file:
+>
+    nmap <Leader>aa <Plug>(AerojumpDefault)
+
+==============================================================================
+3. Configuration                                         *aerojump-configuration*
+
+You can tweak the behavior of aerojump by setting a few variables in your
+config file (TBD).
+
+==============================================================================
+4. Contributing                                           *aerojump-contributing*
+
+Thanks for your interest in aerojump! Here are some ways you can get involved and
+help improve aerojump.
+
+------------------------------------------------------------------------------
+4.1. Issues                                                     *aerojump-issues*
+
+You can help improve aerojump by reporting issues and feature requests in the
+issue tracker:
+
+https://github.com/philip-karlsson/aerojump.nvim/issues
+
+------------------------------------------------------------------------------
+4.2. Pull requests                                               *aerojump-pulls*
+
+Think you can make aerojump better? Awesome! Fork it on GitHub, pick a bug or
+feature and create a pull request:
+
+https://github.com/philip-karlsson/aerojump.nvim/pulls
+
+==============================================================================
+5. Changelog                                                 *aerojump-changelog*
+
+0.0.1
+    * Initial alpha release
+
+==============================================================================
+6. License                                                     *aerojump-license*
+
+MIT License
+Copyright (c) 2019 Philip Karlsson Gisslow <philipkarlsson@me.com>
+
+https://github.com/philip-karlsson/aerojump.nvim/blob/master/LICENSE
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
