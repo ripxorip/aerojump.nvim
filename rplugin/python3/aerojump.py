@@ -109,7 +109,7 @@ class Yaj(object):
     def __init__(self, nvim):
         self.nvim = nvim
         self.logstr = []
-        self.logstr.append('== Yaj debug ==')
+        self.logstr.append('== Aerojump debug ==')
         # Will only be fetched when its needed
         self.tabstop = None
 
@@ -117,17 +117,17 @@ class Yaj(object):
         self.logstr.append(str(s))
 
     def open_yaj_buf(self):
-        self.nvim.command('split Yaj')
+        self.nvim.command('split Aerojump')
         self.nvim.command('setlocal buftype=nofile')
-        self.nvim.command('setlocal filetype=yaj')
+        self.nvim.command('setlocal filetype=aerojump')
         # Fix filetype in order to keep old syntax
-        self.nvim.command('set filetype='+self.ft+'.yaj')
+        self.nvim.command('set filetype='+self.ft+'.aerojump')
         self.yaj_buf_num = self.nvim.current.buffer.number
 
     def open_yaj_filter_buf(self):
-        self.nvim.command('e YajFilter')
+        self.nvim.command('e AerojumpFilter')
         self.nvim.command('setlocal buftype=nofile')
-        self.nvim.command('setlocal filetype=YajFilter')
+        self.nvim.command('setlocal filetype=AerojumpFilter')
         self.filt_buf_num = self.nvim.current.buffer.number
 
     def set_original_cursor_position(self):
@@ -314,7 +314,7 @@ class Yaj(object):
         self.nvim.command("inoremap <buffer> <CR> <ESC>:YajSelect<CR>")
         self.nvim.command("inoremap <buffer> <C-Space> <ESC>:YajSelect<CR>")
 
-    @neovim.autocmd("TextChangedI", pattern='YajFilter', sync=True)
+    @neovim.autocmd("TextChangedI", pattern='AerojumpFilter', sync=True)
     def insert_changed(self):
         """ Process filter input """
         self.filter_string = self.nvim.current.line
