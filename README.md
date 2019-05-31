@@ -1,3 +1,3 @@
-# Yaj
+# Aerojump
 
-Yet another jumper
+Fuzzy match/Searcher/Jumper
