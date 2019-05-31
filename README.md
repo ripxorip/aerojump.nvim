@@ -1,8 +1,8 @@
 # aerojump.nvim
 
-Aerojump is fuzzy-match searcher/jumper for Neovim. Its goal is to enable fast
+Aerojump is a fuzzy-match searcher/jumper for Neovim. Its goal is to enable fast
 navigation through searching using the keyboard. It features several modes
-which can be used depending on your needs. By using an intelligent score
+which can be used depending on your needs. By using an intelligent scoring
 system it will move the cursor to the best match based on your input.
 
 ## Demo
