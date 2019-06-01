@@ -46,7 +46,6 @@ or escape to return to where you were in the buffer before.
 | `esc`                 | Exit aerojump (cursor moves back to original position)
 | `Ctrl-j/k`            | Navigate line wise (up/down)
 | `Ctrl-h/l`            | Navigate match wise (next/previous)
-| `Ctrl-w`              | Clear the filter                                                                      |
 | `C-space`             | Move cursor to selected result
 
 ## Self-Promotion
