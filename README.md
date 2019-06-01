@@ -55,7 +55,7 @@ or escape to return to where you were in the buffer before.
 Like aerojump.nvim? Make sure to follow the repository and why not leave a star.
 
 ## Contributors
-- Philip Karlsson
+- Philip Karlsson Gisslow
 
 ## License
 MIT License
