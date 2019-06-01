@@ -28,10 +28,13 @@ call plug#end()
 
 " Create mappings (with leader)
 nmap <Leader>aa <Plug>(AerojumpDefault)
+....
 
 " Create mappings (without leader)
 " (Authors mapping)
 nmap aj <Plug>(AerojumpDefault)
+nmap ah <Plug>(AerojumpResumePrev)
+nmap al <Plug>(AerojumpResumeNext)
 ```
 
 ## Usage
