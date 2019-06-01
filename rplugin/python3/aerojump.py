@@ -26,7 +26,7 @@ def get_output_of_vim_cmd(nvim, cmd):
     nvim.command('redir END')
     return nvim.eval('@a').strip('\n')
 
-# Utility classes
+# Aerojump classes
 #====================
 class AerojumpLine(object):
     """ Class for a line in a aerojump buffer """
@@ -91,13 +91,47 @@ class AerojumpLine(object):
         # 1.0 equals full match, thereafter fuzzy partials
         self.__score_matches(self.matches, len(pattern))
 
-        # Sorting example fore future reference, the parent class
+        # Sorting example for future reference, the parent class
         # matches[:] = sorted_matches[:]
         # matches = matches.sort(key=len, reverse=True)
 
 
-@neovim.plugin
 class Aerojump(object):
+    """ The main class of aerojump """
+    def __init__(self, lines, lin_nums, logger=None):
+        """ Constructor for the aerojump class
+
+        Parameters:
+            lines: array of the lines of a buffer
+            lin_nums: array of the lin_nums for
+                      each line in 'line'
+            logger: Log function for debugging (shall accept string)
+
+        Returns:
+            an Aerojump object
+
+        """
+        self.logger = logger
+        self.lines = []
+        for i in range(0, len(lines)):
+            self.lines.append(AerojumpLine(lines[i], lin_nums[i]))
+
+    def apply_filter(self, filter_string):
+        """ Filtering function
+
+        Parameters:
+
+            filter_string: string that will be used as filter
+
+        Returns:
+            n/a
+
+        """
+        pass
+
+@neovim.plugin
+class AerojumpNeovim(object):
+    """ Neovim interface """
     def __init__(self, nvim):
         self.nvim = nvim
         self.logstr = []
@@ -143,11 +177,12 @@ class Aerojump(object):
                 self.log(str(m))
         self.has_filter = len(self.filtered_lines) > 0
 
-    def get_lines(self, lines):
-        ret = []
+    def create_aerojumper(self, lines):
+        lines = []
+        lin_nums = []
         for i, line in enumerate(lines):
-            ret.append(AerojumpLine(line, i+1))
-        return ret
+            lines.append(line)
+        return Aerojump(lines, lin_nums)
 
     def create_cursor_highlight(self):
         ret = []
@@ -396,7 +431,7 @@ class Aerojump(object):
         new_buf[:] = self.og_buf[:]
 
         # Create lines
-        self.lines = self.get_lines(new_buf)
+        self.aj = self.create_aerojumper(new_buf)
 
         # Reference to the text buffer
         self.buf_ref = new_buf
