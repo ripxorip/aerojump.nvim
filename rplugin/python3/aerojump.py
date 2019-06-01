@@ -425,6 +425,7 @@ class Aerojump(object):
         self.line_match_index -= 1
         if self.line_match_index < 0:
             self.AerojumpUp('', '')
+            self.line_match_index = len(self.filtered_lines[self.line_filt_index].matches) - 1
         else:
             self.nvim.command('startinsert')
             self.nvim.command('normal! $')
