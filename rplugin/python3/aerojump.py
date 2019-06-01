@@ -1,6 +1,6 @@
 # ============================================================================
 # FILE: aerojump.py
-# AUTHOR: Philip Karlsson <philipkarlsson at me.com>
+# AUTHOR: Philip Karlsson Gisslow <philipkarlsson at me.com>
 # License: MIT license
 # ============================================================================
 
