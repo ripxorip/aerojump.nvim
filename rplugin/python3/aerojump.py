@@ -125,11 +125,7 @@ class Aerojump(object):
     def set_original_cursor_position(self):
         old_win = self.nvim.current.window
         self.nvim.current.window = self.main_win
-        self.nvim.current.window.cursor = self.top_pos
-        self.nvim.command('normal! zt')
-
-        diff = self.og_pos[0] - self.top_pos[0]
-        self.nvim.command('normal! %dj' % (diff))
+        self.set_cursor_position(self.top_pos, self.og_pos)
         self.nvim.current.window = old_win
 
     def apply_filter(self, filter_string):
@@ -307,6 +303,12 @@ class Aerojump(object):
         self.nvim.command("inoremap <buffer> aj <ESC>:AerojumpSelect<CR>")
         self.nvim.command("inoremap <buffer> <C-Space> <ESC>:AerojumpSelect<CR>")
 
+    def set_cursor_position(self, top_pos, og_pos):
+        self.nvim.current.window.cursor = top_pos
+        self.nvim.command('normal! zt')
+        diff = og_pos[0] - top_pos[0]
+        self.nvim.command('normal! %dj' % (diff))
+
     @neovim.autocmd("TextChangedI", pattern='AerojumpFilter', sync=True)
     def insert_changed(self):
         """ Process filter input """
@@ -330,7 +332,6 @@ class Aerojump(object):
         self.og_pos = window.cursor
         self.nvim.command('normal! H')
         self.top_pos = window.cursor
-        self.nvim.command('normal! L')
 
         # Sample current filetype
         resp = get_output_of_vim_cmd(self.nvim, 'set filetype?')
@@ -439,11 +440,29 @@ class Aerojump(object):
         # TODO Add to regular vim search for further highlights
         # being able to step to next etc
         # i.e. select current word
+
+        # TODO Changed my mind, will introduce two new mappings
+        # (al, ah) to summon next/prev match again using memory
+        # instead which will go to next matches using aerojump
         if self.has_filter:
             pos = self.get_current_cursor()
         else:
             pos = self.current_pos
+
+        # Depending on mode, restore window pos too
+        # to match position in filter
+        window = self.main_win
+        og_pos = window.cursor
+        self.nvim.current.window = window
+        self.nvim.command('normal! H')
+        top_pos = window.cursor
+
         self.AerojumpExit('', '')
+
+        # Depending on mode, restore window pos too
+        # to match position in filter
+        self.set_cursor_position(top_pos, og_pos)
+
         self.nvim.current.window.cursor = pos
 
     @neovim.command("AerojumpExit", range='', nargs='*', sync=True)
@@ -454,8 +473,5 @@ class Aerojump(object):
         self.nvim.command('bd %s' % self.aerojump_buf_num)
         self.nvim.command('bd %s' % self.filt_buf_num)
         # Restore original position
-        self.nvim.current.window.cursor = self.top_pos
-        self.nvim.command('normal! zt')
-        diff = self.og_pos[0] - self.top_pos[0]
-        self.nvim.command('normal! %dj' % (diff))
+        self.set_cursor_position(self.top_pos, self.og_pos)
 
