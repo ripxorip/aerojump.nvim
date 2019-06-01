@@ -30,7 +30,8 @@ call plug#end()
 nmap <Leader>aa <Plug>(AerojumpDefault)
 
 " Create mappings (without leader)
-nnoremap <Space> :Aerojump <CR>
+" (Authors mapping)
+nmap aj <Plug>(AerojumpDefault)
 ```
 
 ## Usage
@@ -42,11 +43,13 @@ or escape to return to where you were in the buffer before.
 ### Keybindings
 | Command               | Action                                                                                |
 | ---                   | ---                                                                                   |
-| `enter`               | Move cursor to selected result
-| `esc`                 | Exit aerojump (cursor moves back to original position)
+| `enter`               | Move cursor to the selected result
+| `esc`                 | Move cursor the the selected result
+| `aj`                  | Move cursor the the selected result
+| `C-q`                 | Exit aerojump (cursor moves back to original position)
 | `Ctrl-j/k`            | Navigate line wise (up/down)
 | `Ctrl-h/l`            | Navigate match wise (next/previous)
-| `C-space`             | Move cursor to selected result
+| `C-space`             | Move cursor to the selected result
 
 ## Self-Promotion
 Like aerojump.nvim? Make sure to follow the repository and why not leave a star.

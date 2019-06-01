@@ -302,8 +302,9 @@ class Aerojump(object):
         self.nvim.command("inoremap <buffer> <C-l> <ESC>:AerojumpSelNext<CR>")
         self.nvim.command("inoremap <buffer> <Right> <ESC>:AerojumpSelNext<CR>")
         self.nvim.command("inoremap <buffer> <C-q> <ESC>:AerojumpExit<CR>")
-        self.nvim.command("inoremap <buffer> <ESC> <ESC>:AerojumpExit<CR>")
+        self.nvim.command("inoremap <buffer> <ESC> <ESC>:AerojumpSelect<CR>")
         self.nvim.command("inoremap <buffer> <CR> <ESC>:AerojumpSelect<CR>")
+        self.nvim.command("inoremap <buffer> aj <ESC>:AerojumpSelect<CR>")
         self.nvim.command("inoremap <buffer> <C-Space> <ESC>:AerojumpSelect<CR>")
 
     @neovim.autocmd("TextChangedI", pattern='AerojumpFilter', sync=True)
