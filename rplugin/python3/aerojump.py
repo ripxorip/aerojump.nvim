@@ -102,8 +102,7 @@ class Aerojump(object):
         self.nvim = nvim
         self.logstr = []
         self.logstr.append('== Aerojump debug ==')
-        # Will only be fetched when its needed
-        self.tabstop = None
+        self.has_searched = False
 
     def log(self, s):
         self.logstr.append(str(s))
@@ -126,6 +125,7 @@ class Aerojump(object):
         old_win = self.nvim.current.window
         self.nvim.current.window = self.main_win
         self.set_cursor_position(self.top_pos, self.og_pos)
+        self.nvim.current.window.cursor = self.og_pos
         self.nvim.current.window = old_win
 
     def apply_filter(self, filter_string):
@@ -248,7 +248,6 @@ class Aerojump(object):
         for l in self.lines:
             lines.append(l.raw)
         self.buf_ref[:] = lines[:]
-        self.log('Unfiltered')
         # Reset original cursor position
         self.set_original_cursor_position()
         self.buf_ref.clear_highlight(self.hl_source)
@@ -277,7 +276,6 @@ class Aerojump(object):
         self.buf_ref[:] = lines[:]
         if self.has_filter:
             cursor_pos = self.update_cursor()
-            # TODO Change highlight for the current selection
             self.main_win.cursor = cursor_pos
         self.update_highlights()
 
@@ -309,16 +307,66 @@ class Aerojump(object):
         diff = og_pos[0] - top_pos[0]
         self.nvim.command('normal! %dj' % (diff))
 
+    def resume(self):
+        # Check if we have jumped or not
+        if not self.has_searched:
+            return
+
+        # Sample positions
+        window = self.nvim.current.window
+        self.current_pos = window.cursor
+        self.og_pos = window.cursor
+        self.nvim.command('normal! H')
+        self.top_pos = window.cursor
+
+        # Spawn the filter buffer
+        self.open_aerojump_filter_buf()
+        # Spawn the aerojump buffer
+        self.open_aerojump_buf()
+
+        # Paste the lines of the old buffer to the new
+        new_buf = self.nvim.current.buffer
+        new_buf[:] = self.og_buf[:]
+
+        # Restore main win
+        self.main_win = self.nvim.current.window
+
+        # Go back to the input buffer window
+        self.nvim.command('wincmd j')
+        self.nvim.current.window.height = 1
+        self.nvim.command("startinsert!")
+
+        # Recreate old state
+        self.nvim.current.buffer[0] = self.filter_string
+        self.nvim.command("normal! $")
+
+        self.create_keymap()
+
+    # Aerojump Commands
+    #====================
     @neovim.autocmd("TextChangedI", pattern='AerojumpFilter', sync=True)
     def insert_changed(self):
         """ Process filter input """
+        if self.filter_string == self.nvim.current.line:
+            return
         self.filter_string = self.nvim.current.line
         if self.filter_string != '':
             self.apply_filter(self.filter_string)
         self.draw()
 
+    @neovim.command("AerojumpResumeNext", range='', nargs='*', sync=True)
+    def AerojumpResumeNext(self, args, range):
+        self.resume()
+        self.AerojumpSelNext('','')
+
+    @neovim.command("AerojumpResumePrev", range='', nargs='*', sync=True)
+    def AerojumpResumePrev(self, args, range):
+        self.resume()
+        self.AerojumpSelPrev('','')
+
     @neovim.command("Aerojump", range='', nargs='*', sync=True)
     def Aerojump(self, args, range):
+        self.has_searched = True
         self.has_filter = False
         self.hl_source = self.nvim.new_highlight_source()
         self.og_buf = self.nvim.current.buffer
@@ -369,8 +417,6 @@ class Aerojump(object):
         # Create keymap
         self.create_keymap()
 
-    # Aerojump Commands
-    #====================
     @neovim.command("AerojumpShowLog", range='', nargs='*', sync=True)
     def AerojumpShowLog(self, args, range):
         self.nvim.command('e Aerojump_log')
@@ -467,11 +513,11 @@ class Aerojump(object):
 
     @neovim.command("AerojumpExit", range='', nargs='*', sync=True)
     def AerojumpExit(self, args, range):
-        self.log('AerojumpExit')
         self.nvim.command('stopinsert')
         self.nvim.current.buffer = self.og_buf
         self.nvim.command('bd %s' % self.aerojump_buf_num)
         self.nvim.command('bd %s' % self.filt_buf_num)
         # Restore original position
         self.set_cursor_position(self.top_pos, self.og_pos)
+        self.nvim.current.window.cursor = self.og_pos
 
