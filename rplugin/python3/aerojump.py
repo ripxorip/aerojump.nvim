@@ -437,6 +437,9 @@ class Aerojump(object):
 
 @neovim.plugin
 class AerojumpNeovim(object):
+    # TODO cont. here, add document string to
+    # all method and add __ to the ones that are internal
+    # i.e. not decorated with @neovim...
     """ Neovim interface """
     def __init__(self, nvim):
         self.nvim = nvim
@@ -485,151 +488,14 @@ class AerojumpNeovim(object):
         self.aj.apply_filter(filter_string)
         return
 
-        self.filtered_lines = []
-        filt_index = 0
-        for l in self.lines:
-            l.filter(filter_string)
-            if l.matches != []:
-                l.filt_index = filt_index
-                self.filtered_lines.append(l)
-                filt_index += 1
-                # self.log(l.raw)
-            continue
-            for m in l.matches:
-                self.log(str(m))
-        self.has_filter = len(self.filtered_lines) > 0
-
     def create_aerojumper(self, lines, cursor_pos, top_line, num_lines):
         lin_nums = []
         for i, line in enumerate(lines):
             lin_nums.append(i+1)
         return Aerojump(lines, lin_nums, cursor_pos, top_line, num_lines)
 
-    def create_cursor_highlight(self):
-        ret = []
-        l = self.filtered_lines[self.line_filt_index]
-        matches = l.matches[self.line_match_index]
-        for m in matches:
-            ret.append(('SearchHighlight', l.num-1, m-1, m))
-        return ret
-
-    def create_matches_highlights(self):
-        ret = []
-        for l in self.lines:
-            for m in l.matches:
-                # TODO optimize
-                for i in m:
-                    # TODO Fix -1 offset bug for l.num
-                    # TODO Fix offset error for tabs, (may already be solved)
-                    ret.append(('SearchResult', l.num-1, i-1, i))
-        return ret
-
-    def get_current_cursor(self):
-        l = self.filtered_lines[self.line_filt_index]
-        return (l.num, l.matches[self.line_match_index][0]-1)
-
-    def best_match_index_for(self, line):
-        ret = 0
-        for i in range(0, len(line.matches)):
-            if line.scores[i] > line.scores[ret]:
-                ret = i
-        return ret
-
-    def best_match_for(self, lines):
-        line = lines[0]
-        s_index = self.best_match_index_for(line)
-        score = line.scores[s_index]
-
-        for l in lines:
-            hyp_s_index = self.best_match_index_for(l)
-            # Larger score
-            if ((l.scores[hyp_s_index] > score) or
-                # Same score
-                ((l.scores[hyp_s_index] == score) and
-                # But closer to the current cursor
-                (abs(self.current_pos[0] - l.num) < abs(self.current_pos[0]-line.num)))):
-                score = l.scores[hyp_s_index]
-                s_index = hyp_s_index
-                line = l
-        # Update internal indices
-        self.line_filt_index = line.filt_index
-        self.line_match_index = s_index
-        return self.get_current_cursor()
-
-    def update_cursor(self):
-        # Get information for the currently visible lines
-        visible_start = self.top_pos[0]
-        visible_end = visible_start + self.window_height # Might be -1?
-
-        # Get visible matches
-        visible_matches = [l for l in self.filtered_lines if l.num >= visible_start and l.num <= visible_end]
-        if visible_matches != []:
-            return self.best_match_for(visible_matches)
-        else:
-            return self.best_match_for(self.filtered_lines)
-
-    def _update_cursor(self):
-        # Different kind of matching, different mode?
-        # Saved for reference
-        # Get information for the currently visible lines
-        visible_start = self.top_pos[0]
-        visible_end = visible_start + self.window_height # Might be -1?
-
-        # Might also be - 1?
-        current_line = self.current_pos[0]
-
-        # Find current_line in line
-        found_line = False
-        num_matches = len(self.filtered_lines)
-        if num_matches == 0:
-            # No matches
-            return
-
-        filt_index = 0
-        if self.filtered_lines[filt_index].num >= current_line:
-            found_line = True
-        else:
-            for i in range(0, len(self.filtered_lines)-1):
-                if self.filtered_lines[i].num <= current_line and self.filtered_lines[i+1].num > current_line:
-                    found_line = True
-                    filt_index = i
-        if not found_line:
-            self.log('ERROR! SHOULD HAVE FOUND A LINE BY NOW')
-            return
-
-        return (0, 0)
-
-    def draw_unfiltered(self):
-        lines = []
-        for l in self.lines:
-            lines.append(l.raw)
-        self.buf_ref[:] = lines[:]
-        # Reset original cursor position
-        self.set_original_cursor_position()
-        self.buf_ref.clear_highlight(self.hl_source)
-
     def update_highlights(self, highlights):
         self.buf_ref.update_highlights(self.hl_source, highlights, clear=True)
-
-    def draw_filtered(self):
-        lines = []
-        for l in self.lines:
-            if l.matches != []:
-                lines.append(l.raw)
-                for i, m in enumerate(l.matches):
-                    continue
-                    # Debug
-                    lines.append(str(l.scores[i]))
-                    lines.append(str(m))
-            else:
-                # Newlines or commenting text, will start with newlines
-                # lines.append('') # Spaces could be used in a 'focus' mode
-                lines.append(l.raw) # Standard VIMish mode
-        self.buf_ref[:] = lines[:]
-        if self.has_filter:
-            cursor_pos = self.update_cursor()
-            self.main_win.cursor = cursor_pos
-        self.update_highlights()
 
     def draw(self):
         if self.filter_string != '':
