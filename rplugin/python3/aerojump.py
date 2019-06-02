@@ -138,17 +138,6 @@ class Aerojump(object):
         self.cursor_line_index = 0
         self.cursor_match_index = 0
 
-    def log(self, log_str):
-        """ Log function for Aerojump
-
-        Parameters:
-            log_str: string to be logged
-
-        Returns:
-            n/a
-        """
-        self.log_str.append(str(log_str))
-
     def get_log(self):
         """ Fetch the current log
 
@@ -292,7 +281,13 @@ class Aerojump(object):
             n/a
 
         """
-        pass
+        self.cursor_match_index += 1
+        if self.cursor_match_index >= len(self.filtered_lines[self.cursor_line_index].matches):
+            self.cursor_line_down()
+        else:
+            self.highlights = self.__update_highlights(self.filtered_lines,
+                    self.cursor_line_index,
+                    self.cursor_match_index)
 
     def cursor_match_prev(self):
         """ Moves cursor towards the previous match
@@ -306,31 +301,25 @@ class Aerojump(object):
             n/a
 
         """
-        pass
+        self.cursor_match_index -= 1
+        if self.cursor_match_index < 0:
+            self.cursor_line_up()
+            self.cursor_match_index = len(self.filtered_lines[self.cursor_line_index].matches) - 1
+        else:
+            self.highlights = self.__update_highlights(self.filtered_lines,
+                    self.cursor_line_index,
+                    self.cursor_match_index)
 
-    def __draw_filtered(self):
-        """ Draw function of the plugin for filtered results
-
-        In the future, this function shall be implemented differently depending on mode
+    def __log(self, log_str):
+        """ Log function for Aerojump
 
         Parameters:
-            n/a
+            log_str: string to be logged
 
         Returns:
-            Dict containing (lines_to_draw, highlights, cursor_position)
+            n/a
         """
-        lines = []
-        for l in self.lines:
-            if l.matches != []:
-                lines.append(l.raw)
-            else:
-                # E.g. of a mode
-                # lines.append('')
-                lines.append(l.raw)
-
-        return {'lines':            lines,
-                'highlights':       self.highlights,
-                'cursor_position':  self.get_cursor()}
+        self.log_str.append(str(log_str))
 
     def __best_match_index_for(self, line):
         """ Returns the highest match for line
@@ -787,7 +776,7 @@ class AerojumpNeovim(object):
     @neovim.command("AerojumpUp", range='', nargs='*', sync=True)
     def AerojumpUp(self, args, range):
         self.aj.cursor_line_up()
-        # FIXME: [Performance] Incremental update of highlights?
+        # TODO: [Performance] Incremental update of highlights?
         self.update_highlights(self.aj.get_highlights())
         self.main_win.cursor = self.aj.get_cursor()
 
@@ -797,7 +786,7 @@ class AerojumpNeovim(object):
     @neovim.command("AerojumpDown", range='', nargs='*', sync=True)
     def AerojumpDown(self, args, range):
         self.aj.cursor_line_down()
-        # FIXME: [Performance] Incremental update of highlights?
+        # TODO: [Performance] Incremental update of highlights?
         self.update_highlights(self.aj.get_highlights())
         self.main_win.cursor = self.aj.get_cursor()
 
@@ -806,29 +795,23 @@ class AerojumpNeovim(object):
 
     @neovim.command("AerojumpSelNext", range='', nargs='*', sync=True)
     def AerojumpSelNext(self, args, range):
-        # TODO: Cont here with porting...
-        self.line_match_index += 1
-        if self.has_filter and self.line_match_index >= len(self.filtered_lines[self.line_filt_index].matches):
-            self.AerojumpDown('', '')
-        else:
-            self.nvim.command('startinsert')
-            self.nvim.command('normal! $')
-        if self.has_filter > 0:
-            self.main_win.cursor = self.get_current_cursor()
-            self.update_highlights()
+        self.aj.cursor_match_next()
+        # TODO: [Performance] Incremental update of highlights?
+        self.update_highlights(self.aj.get_highlights())
+        self.main_win.cursor = self.aj.get_cursor()
+
+        self.nvim.command('startinsert')
+        self.nvim.command('normal! $')
 
     @neovim.command("AerojumpSelPrev", range='', nargs='*', sync=True)
     def AerojumpSelPrev(self, args, range):
-        self.line_match_index -= 1
-        if self.line_match_index < 0:
-            self.AerojumpUp('', '')
-            self.line_match_index = len(self.filtered_lines[self.line_filt_index].matches) - 1
-        else:
-            self.nvim.command('startinsert')
-            self.nvim.command('normal! $')
-        if self.has_filter > 0:
-            self.main_win.cursor = self.get_current_cursor()
-            self.update_highlights()
+        self.aj.cursor_match_prev()
+        # TODO: [Performance] Incremental update of highlights?
+        self.update_highlights(self.aj.get_highlights())
+        self.main_win.cursor = self.aj.get_cursor()
+
+        self.nvim.command('startinsert')
+        self.nvim.command('normal! $')
 
     @neovim.command("AerojumpSelect", range='', nargs='*', sync=True)
     def AerojumpSelect(self, args, range):
