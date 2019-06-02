@@ -98,23 +98,57 @@ class AerojumpLine(object):
 
 class Aerojump(object):
     """ The main class of aerojump """
-    def __init__(self, lines, lin_nums, logger=None):
+    def __init__(self, lines, lin_nums, cursor_pos, top_line):
         """ Constructor for the aerojump class
 
         Parameters:
-            lines: array of the lines of a buffer
-            lin_nums: array of the lin_nums for
-                      each line in 'line'
-            logger: Log function for debugging (shall accept string)
+            lines:      array of the lines of a buffer
+
+            lin_nums:   array of the lin_nums for
+                        each line in 'line'
+
+            cursor_pos: cursor position when plugin is
+                        summoned
+
+            top_line:   top-most line visible in the editor
+                        when its summoned (used to keep positioning)
 
         Returns:
             an Aerojump object
 
         """
-        self.logger = logger
+        self.log_str = []
+
+        # Store intial cursor/windows potisioning
+        self.og_top_line = top_line
+        self.og_cursor_pos = cursor_pos
+
+        self.filter_string = ''
         self.lines = []
         for i in range(0, len(lines)):
             self.lines.append(AerojumpLine(lines[i], lin_nums[i]))
+
+    def log(self, log_str):
+        """ Log function for Aerojuper
+
+        Parameters:
+            log_str: string to be logged
+
+        Returns:
+            n/a
+        """
+        self.log_str.append(str(log_str))
+
+    def get_log(self):
+        """ Fetch the current log
+
+        Parameters:
+            n/a
+
+        Returns:
+            List of string for the log
+        """
+        return self.log_str
 
     def apply_filter(self, filter_string):
         """ Filtering function
@@ -128,6 +162,45 @@ class Aerojump(object):
 
         """
         pass
+
+    def draw(self):
+        """ Draw function of the plugin
+
+        Parameters:
+            n/a
+
+        Returns:
+            Dict containing (lines_to_draw, highlights, cursor_position, top_line):
+
+                lines_to_draw:   content of the lines that shall be drawn
+                highlights:      highlights that shall be painted in the editor
+                cursor_position: current cursor position
+                top_line:        Top-most line that shall be visisble in the editor
+                                 ([-1, -1] if it shall be up the editor to position the cursor)
+        """
+        if self.filter_string == '':
+            return self.__draw_unfiltered()
+        else:
+            return self.__draw_filtered()
+
+    def __draw_unfiltered(self):
+        """ Draw function of the plugin for unfiltered results
+
+        Parameters:
+            n/a
+
+        Returns:
+            Dict containing (lines_to_draw, highlights, cursor_position, top_line)
+        """
+        # Create lines
+        lines = []
+        for l in self.lines:
+            lines.append(l.raw)
+
+        return {'lines':            lines,
+                'highlights':       [],
+                'cursor_position':  self.og_cursor_pos,
+                'top_line':         self.og_top_line}
 
 @neovim.plugin
 class AerojumpNeovim(object):
@@ -162,7 +235,23 @@ class AerojumpNeovim(object):
         self.nvim.current.window.cursor = self.og_pos
         self.nvim.current.window = old_win
 
+    def set_cursor_position(self, pos):
+        old_win = self.nvim.current.window
+        self.nvim.current.window = self.main_win
+        self.nvim.current.window.cursor = pos
+        self.nvim.current.window = old_win
+
+    def set_top_pos(self, top_pos):
+        old_win = self.nvim.current.window
+        self.nvim.current.window = self.main_win
+        self.nvim.current.window.cursor = top_pos
+        self.nvim.command('normal! zt')
+        self.nvim.current.window = old_win
+
     def apply_filter(self, filter_string):
+        self.aj.apply_filter(filter_string)
+        return
+
         self.filtered_lines = []
         filt_index = 0
         for l in self.lines:
@@ -177,12 +266,11 @@ class AerojumpNeovim(object):
                 self.log(str(m))
         self.has_filter = len(self.filtered_lines) > 0
 
-    def create_aerojumper(self, lines):
-        lines = []
+    def create_aerojumper(self, lines, cursor_pos, top_line):
         lin_nums = []
         for i, line in enumerate(lines):
-            lines.append(line)
-        return Aerojump(lines, lin_nums)
+            lin_nums.append(i+1)
+        return Aerojump(lines, lin_nums, cursor_pos, top_line)
 
     def create_cursor_highlight(self):
         ret = []
@@ -287,12 +375,8 @@ class AerojumpNeovim(object):
         self.set_original_cursor_position()
         self.buf_ref.clear_highlight(self.hl_source)
 
-    def update_highlights(self):
-        hl = self.create_matches_highlights()
-        if self.has_filter:
-            cursor_hl = self.create_cursor_highlight()
-            for i in cursor_hl: hl.append(i)
-        self.buf_ref.update_highlights(self.hl_source, hl, clear=True)
+    def update_highlights(self, highlights):
+        self.buf_ref.update_highlights(self.hl_source, highlights, clear=True)
 
     def draw_filtered(self):
         lines = []
@@ -316,10 +400,12 @@ class AerojumpNeovim(object):
 
     def draw(self):
         """ Draw function of the plugin """
-        if self.filter_string == '':
-            self.draw_unfiltered()
-        else:
-            self.draw_filtered()
+        ret = self.aj.draw()
+        self.buf_ref[:] = ret['lines'][:]
+        self.update_highlights(ret['highlights'])
+        if ret['top_line'][0] > 0:
+            self.set_top_pos(ret['top_line'])
+        self.set_cursor_position(ret['cursor_position'])
 
     def create_keymap(self):
         self.nvim.command("inoremap <buffer> <C-h> <ESC>:AerojumpSelPrev<CR>")
@@ -335,12 +421,6 @@ class AerojumpNeovim(object):
         self.nvim.command("inoremap <buffer> <CR> <ESC>:AerojumpSelect<CR>")
         self.nvim.command("inoremap <buffer> aj <ESC>:AerojumpSelect<CR>")
         self.nvim.command("inoremap <buffer> <C-Space> <ESC>:AerojumpSelect<CR>")
-
-    def set_cursor_position(self, top_pos, og_pos):
-        self.nvim.current.window.cursor = top_pos
-        self.nvim.command('normal! zt')
-        diff = og_pos[0] - top_pos[0]
-        self.nvim.command('normal! %dj' % (diff))
 
     def resume(self):
         # Check if we have jumped or not
@@ -385,8 +465,7 @@ class AerojumpNeovim(object):
         if self.filter_string == self.nvim.current.line:
             return
         self.filter_string = self.nvim.current.line
-        if self.filter_string != '':
-            self.apply_filter(self.filter_string)
+        self.apply_filter(self.filter_string)
         self.draw()
 
     @neovim.command("AerojumpResumeNext", range='', nargs='*', sync=True)
@@ -426,15 +505,11 @@ class AerojumpNeovim(object):
         # Spawn the aerojump buffer
         self.open_aerojump_buf()
 
-        new_buf = self.nvim.current.buffer
-        # Paste the lines of the old buffer to the new
-        new_buf[:] = self.og_buf[:]
+        # Reference to the aerojump buffer
+        self.buf_ref = self.nvim.current.buffer
 
         # Create lines
-        self.aj = self.create_aerojumper(new_buf)
-
-        # Reference to the text buffer
-        self.buf_ref = new_buf
+        self.aj = self.create_aerojumper(self.og_buf, self.og_pos, self.top_pos)
 
         # Update position
         self.main_win = self.nvim.current.window
@@ -447,7 +522,6 @@ class AerojumpNeovim(object):
         # Reset the filter string
         self.filter_string = ''
         self.draw()
-        self.set_original_cursor_position()
 
         # Create keymap
         self.create_keymap()
@@ -458,10 +532,9 @@ class AerojumpNeovim(object):
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=aerojump_log')
         self.nvim.current.buffer.append(self.logstr)
-        #self.nvim.current.buffer.append('== Lines Log ==')
-        #for i in self.lines:
-            # Add log for each line
-        #    self.nvim.current.buffer.append(i.logstr)
+        aj_log = self.aj.get_log()
+        self.nvim.current.buffer.append('== Aerojump log ==')
+        for l in aj_log: self.nvim.current.buffer.append(l)
 
     @neovim.command("AerojumpUp", range='', nargs='*', sync=True)
     def AerojumpUp(self, args, range):
