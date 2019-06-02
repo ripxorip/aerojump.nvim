@@ -79,6 +79,9 @@ class AerojumpLine(object):
     def filter(self, pattern):
         # Reset the matches
         self.matches = []
+        if pattern == '':
+            # Can't filter empty pattern
+            return
 
         for i in range(0, len(self.raw_lower)):
             # Reset the proposed matches
@@ -98,7 +101,7 @@ class AerojumpLine(object):
 
 class Aerojump(object):
     """ The main class of aerojump """
-    def __init__(self, lines, lin_nums, cursor_pos, top_line):
+    def __init__(self, lines, lin_nums, cursor_pos, top_line, num_lines):
         """ Constructor for the aerojump class
 
         Parameters:
@@ -113,6 +116,8 @@ class Aerojump(object):
             top_line:   top-most line visible in the editor
                         when its summoned (used to keep positioning)
 
+            num_lines:  number of currently visible lines
+
         Returns:
             an Aerojump object
 
@@ -122,6 +127,7 @@ class Aerojump(object):
         # Store intial cursor/windows potisioning
         self.og_top_line = top_line
         self.og_cursor_pos = cursor_pos
+        self.num_lines = num_lines
 
         self.filter_string = ''
         self.lines = []
@@ -129,7 +135,7 @@ class Aerojump(object):
             self.lines.append(AerojumpLine(lines[i], lin_nums[i]))
 
     def log(self, log_str):
-        """ Log function for Aerojuper
+        """ Log function for Aerojump
 
         Parameters:
             log_str: string to be logged
@@ -161,7 +167,16 @@ class Aerojump(object):
             n/a
 
         """
-        pass
+        self.filter_string = filter_string
+        self.filtered_lines = self.__get_filtered_lines(filter_string, self.lines)
+        self.has_filter_results = len(self.filtered_lines) > 0
+
+        if self.has_filter_results:
+            cursor_indices = self.__set_cursor_to_best_match()
+            self.cursor_line_index = cursor_indices[0]
+            self.cursor_match_index = cursor_indices[1]
+            #FIXME split this line
+            self.highlights = self.__update_highlights(self.lines, self.filtered_lines, self.cursor_line_index, self.cursor_match_index)
 
     def draw(self):
         """ Draw function of the plugin
@@ -176,12 +191,53 @@ class Aerojump(object):
                 highlights:      highlights that shall be painted in the editor
                 cursor_position: current cursor position
                 top_line:        Top-most line that shall be visisble in the editor
-                                 ([-1, -1] if it shall be up the editor to position the cursor)
+                                 ((-1, -1) if it shall be up the editor to position the cursor)
         """
         if self.filter_string == '':
             return self.__draw_unfiltered()
         else:
             return self.__draw_filtered()
+
+    def get_cursor(self):
+        """ Gets the current cursor position
+
+        Parameters:
+            n/a
+
+        Returns:
+            Tuple containing the current cursor position
+        """
+        if not self.has_filter_results:
+            return (1, 1)
+
+        l = self.filtered_lines[self.cursor_line_index]
+        return (l.num, l.matches[self.cursor_match_index][0]-1)
+
+    def __draw_filtered(self):
+        """ Draw function of the plugin for filtered results
+
+        In the future, this function shall be implemented differently depending on mode
+
+        Parameters:
+            n/a
+
+        Returns:
+            Dict containing (lines_to_draw, highlights, cursor_position, top_line)
+        """
+        lines = []
+        for l in self.lines:
+            if l.matches != []:
+                lines.append(l.raw)
+            else:
+                # E.g. of a mode
+                # lines.append('')
+                lines.append(l.raw)
+
+        return {'lines':            lines,
+                'highlights':       self.highlights,
+                'cursor_position':  self.get_cursor(),
+                # The editor sets the position
+                'top_line':         (-1, -1)}
 
     def __draw_unfiltered(self):
         """ Draw function of the plugin for unfiltered results
@@ -201,6 +257,123 @@ class Aerojump(object):
                 'highlights':       [],
                 'cursor_position':  self.og_cursor_pos,
                 'top_line':         self.og_top_line}
+
+    def __best_match_index_for(self, line):
+        """ Returns the highest match for line
+
+        Parameters:
+            line: Line that will be checked
+
+        Returns:
+            Index of the best match
+        """
+        ret = 0
+        for i in range(0, len(line.matches)):
+            if line.scores[i] > line.scores[ret]:
+                ret = i
+        return ret
+
+    def __best_cursor_in(self, lines):
+        """ Returns the best cursor indices among the lines
+
+        Parameters:
+            lines: lines to find the best cursor for
+
+        Returns:
+            Tuple containing (line_index, match_index)
+                line_index: index for the best line
+                match_index: index for the best match of that line
+        """
+        line = lines[0]
+        s_index = self.__best_match_index_for(line)
+        score = line.scores[s_index]
+
+        for l in lines:
+            hyp_s_index = self.__best_match_index_for(l)
+            # Larger score
+            if ((l.scores[hyp_s_index] > score) or
+                # Same score
+                ((l.scores[hyp_s_index] == score) and
+                # But closer to the original cursor position
+                (abs(self.og_cursor_pos[0] - l.num) < abs(self.og_cursor_pos[0]-line.num)))):
+                score = l.scores[hyp_s_index]
+                s_index = hyp_s_index
+                line = l
+        return(line.filt_index, s_index)
+
+    def __set_cursor_to_best_match(self):
+        """ Updates the internal cursor position
+
+        Parameters:
+            n/a
+
+        Returns:
+            Tuple containing (line_index, match_index)
+                line_index: index for the best line
+                match_index: index for the best match of that line
+        """
+        # Get information for the currently visible lines
+        visible_start = self.og_top_line[0]
+        visible_end = visible_start + self.num_lines # Might need to add -1?
+
+        # Get visible matches
+        visible_matches = [l for l in self.filtered_lines if l.num >= visible_start and l.num <= visible_end]
+        if visible_matches != []:
+            ret = self.__best_cursor_in(visible_matches)
+        else:
+            ret = self.__best_cursor_in(self.filtered_lines)
+        return ret
+
+    def __update_highlights(self, lines, filtered_lines, cursor_line_index, cursor_match_index):
+        """ Updates the internal highlights
+
+        NOTE: This function can likely be simplified, might only need to look at filtered_lines?
+
+        Parameters:
+            lines: All lines of the buffer
+            filtered_lines: Filtered lines of the buffer
+            cursor_line_index: Line index for the cursor
+            cursor_match_index: Match index of the line at cursor
+
+        Returns:
+            List with highlights
+        """
+        highlights = []
+        # Match highlights
+        for l in lines:
+            for m in l.matches:
+                # TODO optimize
+                for i in m:
+                    # TODO Fix -1 offset bug for l.num
+                    # TODO Fix offset error for tabs, (may already be solved)
+                    highlights.append(('SearchResult', l.num-1, i-1, i))
+        # Cursor highlights
+        l = filtered_lines[cursor_line_index]
+        matches = l.matches[cursor_match_index]
+        for m in matches:
+            highlights.append(('SearchHighlight', l.num-1, m-1, m))
+        return highlights
+
+
+    def __get_filtered_lines(self, filter_string, lines):
+        """ Get filtered lines
+
+        Parameters:
+            filter_string:  filter string
+            lines:          lines to be filtered
+
+        Returns:
+            filtered_lines
+        """
+        filtered_lines = []
+        filt_index = 0
+        for l in lines:
+            l.filter(filter_string)
+            if l.matches != []:
+                l.filt_index = filt_index
+                filtered_lines.append(l)
+                filt_index += 1
+        return filtered_lines
 
 @neovim.plugin
 class AerojumpNeovim(object):
@@ -266,11 +439,11 @@ class AerojumpNeovim(object):
                 self.log(str(m))
         self.has_filter = len(self.filtered_lines) > 0
 
-    def create_aerojumper(self, lines, cursor_pos, top_line):
+    def create_aerojumper(self, lines, cursor_pos, top_line, num_lines):
         lin_nums = []
         for i, line in enumerate(lines):
             lin_nums.append(i+1)
-        return Aerojump(lines, lin_nums, cursor_pos, top_line)
+        return Aerojump(lines, lin_nums, cursor_pos, top_line, num_lines)
 
     def create_cursor_highlight(self):
         ret = []
@@ -401,6 +574,7 @@ class AerojumpNeovim(object):
     def draw(self):
         """ Draw function of the plugin """
         ret = self.aj.draw()
+        self.log(ret)
         self.buf_ref[:] = ret['lines'][:]
         self.update_highlights(ret['highlights'])
         if ret['top_line'][0] > 0:
@@ -509,7 +683,7 @@ class AerojumpNeovim(object):
         self.buf_ref = self.nvim.current.buffer
 
         # Create lines
-        self.aj = self.create_aerojumper(self.og_buf, self.og_pos, self.top_pos)
+        self.aj = self.create_aerojumper(self.og_buf, self.og_pos, self.top_pos, self.window_height)
 
         # Update position
         self.main_win = self.nvim.current.window
