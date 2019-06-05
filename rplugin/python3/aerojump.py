@@ -129,6 +129,7 @@ class Aerojump(object):
         # Reset indices
         self.cursor_line_index = 0
         self.cursor_match_index = 0
+        self.has_filter_results = False
 
     def get_log(self):
         """ Fetch the current log
@@ -445,7 +446,6 @@ def get_output_of_vim_cmd(nvim, cmd):
 
 @neovim.plugin
 class AerojumpNeovim(object):
-    # TODO: Cont here with refactoring
     def __init__(self, nvim):
         self.nvim = nvim
         self.logstr = []
@@ -481,10 +481,6 @@ class AerojumpNeovim(object):
         self.nvim.current.window.cursor = top_pos
         self.nvim.command('normal! zt')
         self.nvim.current.window = old_win
-
-    def __apply_filter(self, filter_string):
-        self.aj.apply_filter(filter_string)
-        return
 
     def __create_aerojumper(self, lines, cursor_pos, top_line, num_lines):
         lin_nums = []
@@ -573,7 +569,7 @@ class AerojumpNeovim(object):
         if self.filter_string == self.nvim.current.line:
             return
         self.filter_string = self.nvim.current.line
-        self.__apply_filter(self.filter_string)
+        self.aj.apply_filter(self.filter_string)
         self.__draw()
 
     @neovim.command("AerojumpResumeNext", range='', nargs='*', sync=True)
