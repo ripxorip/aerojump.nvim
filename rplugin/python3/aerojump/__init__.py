@@ -8,7 +8,7 @@ import neovim
 import os
 import re
 
-from aerojump.aerojump import Aerojump
+from aerojump.aerojump import Aerojump, AerojumpSpace, AerojumpBolt
 
 def get_output_of_vim_cmd(nvim, cmd):
     """ Utility function to get the current output
@@ -64,11 +64,17 @@ class AerojumpNeovim(object):
         self.nvim.command('normal! zt')
         self.nvim.current.window = old_win
 
-    def __create_aerojumper(self, lines, cursor_pos, top_line, num_lines):
+    def __create_aerojumper(self, mode, lines, cursor_pos, top_line, num_lines):
         lin_nums = []
         for i, line in enumerate(lines):
             lin_nums.append(i+1)
-        return Aerojump(lines, lin_nums, cursor_pos, top_line, num_lines)
+        if mode == 'space':
+            return AerojumpSpace(lines, lin_nums, cursor_pos, top_line, num_lines)
+        elif mode == 'bolt':
+            return AerojumpBolt(lines, lin_nums, cursor_pos, top_line, num_lines)
+        else:
+            return Aerojump(lines, lin_nums, cursor_pos, top_line, num_lines)
+
 
     def __update_highlights(self, highlights):
         self.buf_ref.update_highlights(self.hl_source, highlights, clear=True)
@@ -99,7 +105,7 @@ class AerojumpNeovim(object):
         self.nvim.command("inoremap <buffer> <ESC> <ESC>:AerojumpSelect<CR>")
         self.nvim.command("inoremap <buffer> <CR> <ESC>:AerojumpSelect<CR>")
         self.nvim.command("inoremap <buffer> aj <ESC>:AerojumpSelect<CR>")
-        self.nvim.command("inoremap <buffer> <C-Space> <ESC>:AerojumpSelect<CR>")
+        self.nvim.command("inoremap <buffer> <Space> <ESC>:AerojumpSelect<CR>")
 
     def __resume(self):
         # Check if we have jumped or not
@@ -185,11 +191,12 @@ class AerojumpNeovim(object):
         """ Start aerojump in its default (or last?) mode
 
         Parameters:
-            n/a
+            args[0]: Mode that aerojump will start in
 
         Returns:
             n/a
         """
+        mode = args[0]
         self.has_searched = True
         self.has_filter = False
         self.hl_source = self.nvim.new_highlight_source()
@@ -219,7 +226,7 @@ class AerojumpNeovim(object):
         self.buf_ref = self.nvim.current.buffer
 
         # Create lines
-        self.aj = self.__create_aerojumper(self.og_buf, self.og_pos, self.top_pos, self.window_height)
+        self.aj = self.__create_aerojumper(mode, self.og_buf, self.og_pos, self.top_pos, self.window_height)
 
         # Update position
         self.main_win = self.nvim.current.window

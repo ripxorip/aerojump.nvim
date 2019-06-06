@@ -49,6 +49,7 @@ or escape to return to where you were in the buffer before.
 | `enter`               | Move cursor to the selected result
 | `esc`                 | Move cursor the the selected result
 | `aj`                  | Move cursor the the selected result
+| `Space`               | Move cursor the the selected result
 | `C-q`                 | Exit aerojump (cursor moves back to original position)
 | `Ctrl-j/k`            | Navigate line wise (up/down)
 | `Ctrl-h/l`            | Navigate match wise (next/previous)

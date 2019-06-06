@@ -195,7 +195,7 @@ class Aerojump(object):
                     self.cursor_match_index)
 
     def draw(self):
-        """ Draw function of the plugin
+        """ Draw function of the default mode
 
         In the future this method shall be implemented differently depending on mode
 
@@ -210,14 +210,7 @@ class Aerojump(object):
         """
 
         lines = []
-        for l in self.lines:
-            if l.matches != []:
-                lines.append(l.raw)
-            else:
-                # E.g. of 'space' mode below
-                # lines.append('')
-                lines.append(l.raw)
-
+        for l in self.lines: lines.append(l.raw)
         return {'lines':            lines,
                 'highlights':       self.highlights,
                 'cursor_position':  self.get_cursor()}
@@ -456,3 +449,34 @@ class Aerojump(object):
                 filt_index += 1
         return filtered_lines
 
+# Aerojump sub classes (modes)
+#=============================
+class AerojumpSpace(Aerojump):
+    def draw(self):
+        """ Draw function of the space mode
+
+        In the future this method shall be implemented differently depending on mode
+
+        Parameters:
+            n/a
+
+        Returns:
+            Dict containing (lines_to_draw, highlights, cursor_position, top_line):
+                lines_to_draw:   content of the lines that shall be drawn
+                highlights:      highlights that shall be painted in the editor
+                cursor_position: current cursor position
+        """
+
+        lines = []
+        for l in self.lines:
+            if l.matches != []:
+                lines.append(l.raw)
+            else:
+                lines.append(' ')
+
+        return {'lines':            lines,
+                'highlights':       self.highlights,
+                'cursor_position':  self.get_cursor()}
+
+class AerojumpBolt(Aerojump):
+    pass
