@@ -4,15 +4,11 @@
 # License: MIT license
 # ============================================================================
 
-# Add support for different kind of _modes_
-
-# Cool idea:
-# Only delete with space if its in the visible range,
-# otherwise use 'commented' highlights for results
-# that way it can be a good searcher too. Also rethink
-# if I want to match in another way when its not visible.
-
-# Also prioritize close to cursor if tie between scores
+# ============================================================================
+# = Current TODO =
+# 1. Implement support for different modes (vacuum, space etc.)
+# 2. Improve the way search results are filtered (reward closeness in a better way)
+# ============================================================================
 
 # Aerojump classes
 #====================
@@ -135,16 +131,12 @@ class Aerojump(object):
 
         Parameters:
             lines:      array of the lines of a buffer
-
             lin_nums:   array of the lin_nums for
                         each line in 'line'
-
             cursor_pos: cursor position when plugin is
                         summoned
-
             top_line:   top-most line visible in the editor
                         when its summoned
-
             num_lines:  number of currently visible lines
 
         Returns:
@@ -212,7 +204,6 @@ class Aerojump(object):
 
         Returns:
             Dict containing (lines_to_draw, highlights, cursor_position, top_line):
-
                 lines_to_draw:   content of the lines that shall be drawn
                 highlights:      highlights that shall be painted in the editor
                 cursor_position: current cursor position
