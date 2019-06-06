@@ -23,6 +23,16 @@ import re
 class AerojumpLine(object):
     """ Class for a line in a aerojump buffer """
     def __init__(self, line, num):
+        """ Constructor for the aerojump line class
+
+        Parameters:
+            line: the text that the line contains
+            num: the line number in the buffer that the line comes from
+
+        Returns:
+            Aerojump line object
+
+        """
         # Raw text
         self.raw = line
         self.raw_lower = line.lower()
@@ -32,6 +42,17 @@ class AerojumpLine(object):
         self.matches = []
 
     def __score_matches(self, matches, pat_len):
+        """ Scores the matches depending on how
+            many characters that are adjacent to each other
+
+        Parameters:
+            matches: List of matches to calculate score for
+            pat_len: Total length of the pattern that has been matched
+
+        Returns:
+            sorted_matches: List of scored matches
+        """
+
         sorted_matches = []
         self.scores = []
         for m in matches:
@@ -51,6 +72,18 @@ class AerojumpLine(object):
         return sorted_matches
 
     def __match_from(self, matches, pattern, pat_index, word_index):
+        """ Tries to match character at pattern[pat_index]
+            from left to right recursively
+
+        Parameters:
+            matches: List of matches
+            pattern: Filter pattern
+            pat_index: Index in the pattern
+            word_index: Word in the line
+
+        Returns:
+            Wether or not a full match of the pattern has been accomplished
+        """
         for i in range(word_index, len(self.raw)):
             if self.raw_lower[i] == pattern[pat_index]:
                 matches.append(i+1)
@@ -69,6 +102,14 @@ class AerojumpLine(object):
         return False
 
     def filter(self, pattern):
+        """ Applies filter to the line
+
+        Parameters:
+            pattern: Filter pattern
+
+        Returns:
+            n/a
+        """
         # Reset the matches
         self.matches = []
         if pattern == '':
