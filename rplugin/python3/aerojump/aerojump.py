@@ -277,7 +277,8 @@ class Aerojump(object):
         self.cursor_line_index -= 1
         if self.cursor_line_index < 0:
             self.cursor_line_index = 0
-        self.cursor_match_index = 0
+        scores = self.filtered_lines[self.cursor_line_index].scores
+        self.cursor_match_index = scores.index(max(scores))
 
         self.highlights = self._update_highlights(self.filtered_lines,
                 self.cursor_line_index,
@@ -300,7 +301,8 @@ class Aerojump(object):
         self.cursor_line_index += 1
         if self.cursor_line_index >= len(self.filtered_lines):
             self.cursor_line_index = len(self.filtered_lines) - 1
-        self.cursor_match_index = 0
+        scores = self.filtered_lines[self.cursor_line_index].scores
+        self.cursor_match_index = scores.index(max(scores))
 
         self.highlights = self._update_highlights(self.filtered_lines,
                 self.cursor_line_index,
@@ -542,9 +544,8 @@ class AerojumpBolt(Aerojump):
             self._sort_filtered_lines()
             # Already sorted
             self.cursor_line_index = 0
-            scores = self.filtered_lines[0].scores
+            scores = self.filtered_lines[self.cursor_line_index].scores
             self.cursor_match_index = scores.index(max(scores))
-            self.cursor_match_index = 0
 
     def draw(self):
         """ Draw function of the space mode
