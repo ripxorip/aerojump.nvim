@@ -343,7 +343,7 @@ class AerojumpNeovim(object):
         Returns:
             n/a
         """
-        cursor = self.aj.get_cursor()
+        cursor = self.aj.get_final_cursor()
 
         # Sample position in aj window
         window = self.main_win

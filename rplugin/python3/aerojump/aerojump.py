@@ -33,7 +33,7 @@ class AerojumpLine(object):
         # Matches in this line
         self.matches = []
 
-    def __score_matches(self, matches, pat_len):
+    def _score_matches(self, matches, pat_len):
         """ Scores the matches depending on how
             many characters that are adjacent to each other
 
@@ -63,7 +63,7 @@ class AerojumpLine(object):
             self.scores.append(score/pat_len)
         return sorted_matches
 
-    def __match_from(self, matches, pattern, pat_index, word_index):
+    def _match_from(self, matches, pattern, pat_index, word_index):
         """ Tries to match character at pattern[pat_index]
             from left to right recursively
 
@@ -87,7 +87,7 @@ class AerojumpLine(object):
                 # More characters to process
                 elif next_word_index < len(self.raw_lower):
                     # Recursion :)
-                    return self.__match_from(matches, pattern, next_pat_index, next_word_index)
+                    return self._match_from(matches, pattern, next_pat_index, next_word_index)
                 # No more characters left to process but pattern is complete
                 else:
                     return False
@@ -113,11 +113,11 @@ class AerojumpLine(object):
             proposed_matches = []
             # Start with last pattern c and last char of raw
             if self.raw_lower[i] == pattern[0]:
-                if self.__match_from(proposed_matches, pattern, 0, i):
+                if self._match_from(proposed_matches, pattern, 0, i):
                     self.matches.append(proposed_matches)
 
         # 1.0 equals full match, thereafter fuzzy partials
-        self.__score_matches(self.matches, len(pattern))
+        self._score_matches(self.matches, len(pattern))
 
         # Sorting example for future reference, the parent class
         # matches[:] = sorted_matches[:]
@@ -183,14 +183,14 @@ class Aerojump(object):
 
         """
         self.filter_string = filter_string
-        self.filtered_lines = self.__get_filtered_lines(filter_string, self.lines)
+        self.filtered_lines = self._get_filtered_lines(filter_string, self.lines)
         self.has_filter_results = len(self.filtered_lines) > 0
 
         if self.has_filter_results:
-            cursor_indices = self.__set_cursor_to_best_match()
+            cursor_indices = self._set_cursor_to_best_match()
             self.cursor_line_index = cursor_indices[0]
             self.cursor_match_index = cursor_indices[1]
-            self.highlights = self.__update_highlights(self.filtered_lines,
+            self.highlights = self._update_highlights(self.filtered_lines,
                     self.cursor_line_index,
                     self.cursor_match_index)
 
@@ -217,6 +217,23 @@ class Aerojump(object):
 
     def get_cursor(self):
         """ Gets the current cursor position
+
+        Parameters:
+            n/a
+
+        Returns:
+            Tuple containing the current cursor position
+        """
+        if not self.has_filter_results:
+            return self.og_cursor_pos
+
+        l = self.filtered_lines[self.cursor_line_index]
+        return (l.num, l.matches[self.cursor_match_index][0]-1)
+
+    def get_final_cursor(self):
+        """ Gets the final cursor position
+            (Needed since some modes adds/subtracts
+             from the filtered buffer)
 
         Parameters:
             n/a
@@ -258,7 +275,7 @@ class Aerojump(object):
             self.cursor_line_index = 0
         self.cursor_match_index = 0
 
-        self.highlights = self.__update_highlights(self.filtered_lines,
+        self.highlights = self._update_highlights(self.filtered_lines,
                 self.cursor_line_index,
                 self.cursor_match_index)
 
@@ -279,7 +296,7 @@ class Aerojump(object):
             self.cursor_line_index = len(self.filtered_lines) - 1
         self.cursor_match_index = 0
 
-        self.highlights = self.__update_highlights(self.filtered_lines,
+        self.highlights = self._update_highlights(self.filtered_lines,
                 self.cursor_line_index,
                 self.cursor_match_index)
 
@@ -299,7 +316,7 @@ class Aerojump(object):
         if self.cursor_match_index >= len(self.filtered_lines[self.cursor_line_index].matches):
             self.cursor_line_down()
         else:
-            self.highlights = self.__update_highlights(self.filtered_lines,
+            self.highlights = self._update_highlights(self.filtered_lines,
                     self.cursor_line_index,
                     self.cursor_match_index)
 
@@ -320,11 +337,11 @@ class Aerojump(object):
             self.cursor_line_up()
             self.cursor_match_index = len(self.filtered_lines[self.cursor_line_index].matches) - 1
         else:
-            self.highlights = self.__update_highlights(self.filtered_lines,
+            self.highlights = self._update_highlights(self.filtered_lines,
                     self.cursor_line_index,
                     self.cursor_match_index)
 
-    def __log(self, log_str):
+    def _log(self, log_str):
         """ Log function for Aerojump
 
         Parameters:
@@ -335,7 +352,7 @@ class Aerojump(object):
         """
         self.log_str.append(str(log_str))
 
-    def __best_match_index_for(self, line):
+    def _best_match_index_for(self, line):
         """ Returns the highest match for line
 
         Parameters:
@@ -350,7 +367,7 @@ class Aerojump(object):
                 ret = i
         return ret
 
-    def __best_cursor_in(self, lines):
+    def _best_cursor_in(self, lines):
         """ Returns the best cursor indices among the lines
 
         Parameters:
@@ -362,11 +379,11 @@ class Aerojump(object):
                 match_index: index for the best match of that line
         """
         line = lines[0]
-        s_index = self.__best_match_index_for(line)
+        s_index = self._best_match_index_for(line)
         score = line.scores[s_index]
 
         for l in lines:
-            hyp_s_index = self.__best_match_index_for(l)
+            hyp_s_index = self._best_match_index_for(l)
             # Larger score
             if ((l.scores[hyp_s_index] > score) or
                 # Same score
@@ -378,7 +395,7 @@ class Aerojump(object):
                 line = l
         return(line.filt_index, s_index)
 
-    def __set_cursor_to_best_match(self):
+    def _set_cursor_to_best_match(self):
         """ Updates the internal cursor position
 
         Parameters:
@@ -396,12 +413,12 @@ class Aerojump(object):
         # Get visible matches
         visible_matches = [l for l in self.filtered_lines if l.num >= visible_start and l.num <= visible_end]
         if visible_matches != []:
-            ret = self.__best_cursor_in(visible_matches)
+            ret = self._best_cursor_in(visible_matches)
         else:
-            ret = self.__best_cursor_in(self.filtered_lines)
+            ret = self._best_cursor_in(self.filtered_lines)
         return ret
 
-    def __update_highlights(self, filtered_lines, cursor_line_index, cursor_match_index):
+    def _update_highlights(self, filtered_lines, cursor_line_index, cursor_match_index):
         """ Updates the internal highlights
 
         NOTE: This function can likely be simplified, might only need to look at filtered_lines?
@@ -429,7 +446,7 @@ class Aerojump(object):
         return highlights
 
 
-    def __get_filtered_lines(self, filter_string, lines):
+    def _get_filtered_lines(self, filter_string, lines):
         """ Get filtered lines
 
         Parameters:
@@ -479,4 +496,108 @@ class AerojumpSpace(Aerojump):
                 'cursor_position':  self.get_cursor()}
 
 class AerojumpBolt(Aerojump):
-    pass
+    """ Subclass for the Bolt mode """
+    def get_cursor(self):
+        """ Gets the current cursor position
+
+        Parameters:
+            n/a
+
+        Returns:
+            Tuple containing the current cursor position
+        """
+        if not self.has_filter_results:
+            return self.og_cursor_pos
+
+        l = self.filtered_lines[self.cursor_line_index]
+        return (l.res_line, l.matches[self.cursor_match_index][0]-1)
+
+    def apply_filter(self, filter_string):
+        """ Filtering function
+
+        Parameters:
+
+            filter_string: string that will be used as filter
+
+        Returns:
+            n/a
+
+        """
+        self.filter_string = filter_string
+        self.filtered_lines = self._get_filtered_lines(filter_string, self.lines)
+        self.has_filter_results = len(self.filtered_lines) > 0
+
+        if self.has_filter_results:
+            self.highlights = []
+            self._sort_filtered_lines()
+            # Already sorted
+            self.cursor_line_index = 0
+            self.cursor_match_index = 0
+            self.highlights = self._update_highlights(self.filtered_lines,
+                     self.cursor_line_index,
+                     self.cursor_match_index)
+
+    def draw(self):
+        """ Draw function of the space mode
+
+        In the future this method shall be implemented differently depending on mode
+
+        Parameters:
+            n/a
+
+        Returns:
+            Dict containing (lines_to_draw, highlights, cursor_position, top_line):
+                lines_to_draw:   content of the lines that shall be drawn
+                highlights:      highlights that shall be painted in the editor
+                cursor_position: current cursor position
+        """
+
+        lines = []
+        for l in self.filtered_lines:
+            lines.append(l.raw)
+
+        return {'lines':            lines,
+                'highlights':       self.highlights,
+                'cursor_position':  self.get_cursor()}
+
+    def _update_highlights(self, filtered_lines, cursor_line_index, cursor_match_index):
+        """ Updates the internal highlights
+
+        NOTE: This function can likely be simplified, might only need to look at filtered_lines?
+
+        Parameters:
+            lines: All lines of the buffer
+            filtered_lines: Filtered lines of the buffer
+            cursor_line_index: Line index for the cursor
+            cursor_match_index: Match index of the line at cursor
+
+        Returns:
+            List with highlights
+        """
+        highlights = []
+        # Match highlights
+        for l in filtered_lines:
+            for m in l.matches:
+                for i in m:
+                    highlights.append(('SearchResult', l.res_line-1, i-1, i))
+        # Cursor highlights
+        l = filtered_lines[cursor_line_index]
+        matches = l.matches[cursor_match_index]
+        for m in matches:
+            highlights.append(('SearchHighlight', l.res_line-1, m-1, m))
+        return highlights
+
+    def _sort_filtered_lines(self):
+        """ Sorts the filtered lines depending on score
+
+            Parameters:
+                n/a
+
+            Returns:
+                n/a
+        """
+        for f in self.filtered_lines:
+            f.best_score = max(f.scores)
+        self.filtered_lines.sort(key=lambda x: x.best_score, reverse=True)
+        for i in range(0, len(self.filtered_lines)): self.filtered_lines[i].res_line = i + 1
+

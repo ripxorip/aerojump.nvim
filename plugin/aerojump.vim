@@ -3,6 +3,9 @@
 "   Preferences can be set in vimrc files and so on to configure aerojump
 
 nnoremap <silent> <Plug>(AerojumpDefault) :Aerojump default<Return>
+nnoremap <silent> <Plug>(AerojumpSpace) :Aerojump space<Return>
+nnoremap <silent> <Plug>(AerojumpBolt) :Aerojump bolt<Return>
+nnoremap <silent> <Plug>(AerojumpShowLog) :AerojumpShowLog<Return>
 
 nnoremap <silent> <Plug>(AerojumpResumeNext) :AerojumpResumeNext<Return>
 nnoremap <silent> <Plug>(AerojumpResumePrev) :AerojumpResumePrev<Return>
