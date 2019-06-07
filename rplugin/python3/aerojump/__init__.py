@@ -64,16 +64,16 @@ class AerojumpNeovim(object):
         self.nvim.command('normal! zt')
         self.nvim.current.window = old_win
 
-    def __create_aerojumper(self, mode, lines, cursor_pos, top_line, num_lines):
+    def __create_aerojumper(self, settings, lines, cursor_pos, top_line, num_lines):
         lin_nums = []
         for i, line in enumerate(lines):
             lin_nums.append(i+1)
-        if mode == 'space':
-            return AerojumpSpace(lines, lin_nums, cursor_pos, top_line, num_lines)
-        elif mode == 'bolt':
-            return AerojumpBolt(lines, lin_nums, cursor_pos, top_line, num_lines)
+        if settings['mode'] == 'space':
+            return AerojumpSpace(settings, lines, lin_nums, cursor_pos, top_line, num_lines)
+        elif settings['mode'] == 'bolt':
+            return AerojumpBolt(settings, lines, lin_nums, cursor_pos, top_line, num_lines)
         else:
-            return Aerojump(lines, lin_nums, cursor_pos, top_line, num_lines)
+            return Aerojump(settings, lines, lin_nums, cursor_pos, top_line, num_lines)
 
 
     def __update_highlights(self, highlights):
@@ -196,7 +196,8 @@ class AerojumpNeovim(object):
         Returns:
             n/a
         """
-        mode = args[0]
+        settings = {}
+        settings['mode'] = args[0]
         self.has_searched = True
         self.has_filter = False
         self.hl_source = self.nvim.new_highlight_source()
@@ -226,7 +227,7 @@ class AerojumpNeovim(object):
         self.buf_ref = self.nvim.current.buffer
 
         # Create lines
-        self.aj = self.__create_aerojumper(mode, self.og_buf, self.og_pos, self.top_pos, self.window_height)
+        self.aj = self.__create_aerojumper(settings, self.og_buf, self.og_pos, self.top_pos, self.window_height)
 
         # Update position
         self.main_win = self.nvim.current.window

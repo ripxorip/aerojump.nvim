@@ -126,10 +126,11 @@ class AerojumpLine(object):
 
 class Aerojump(object):
     """ The main class of aerojump """
-    def __init__(self, lines, lin_nums, cursor_pos, top_line, num_lines):
+    def __init__(self, settings, lines, lin_nums, cursor_pos, top_line, num_lines):
         """ Constructor for the aerojump class
 
         Parameters:
+            settings:   dict of settings
             lines:      array of the lines of a buffer
             lin_nums:   array of the lin_nums for
                         each line in 'line'
@@ -143,6 +144,7 @@ class Aerojump(object):
             an Aerojump object
 
         """
+        self.settings = settings
         self.log_str = []
 
         # Store intial cursor/windows potisioning
