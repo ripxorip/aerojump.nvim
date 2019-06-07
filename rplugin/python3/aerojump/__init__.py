@@ -71,6 +71,8 @@ class AerojumpNeovim(object):
         if settings['mode'] == 'space':
             return AerojumpSpace(settings, lines, lin_nums, cursor_pos, top_line, num_lines)
         elif settings['mode'] == 'bolt':
+            settings['bolt_lines_before'] = 1
+            settings['bolt_lines_after'] = 1
             return AerojumpBolt(settings, lines, lin_nums, cursor_pos, top_line, num_lines)
         else:
             return Aerojump(settings, lines, lin_nums, cursor_pos, top_line, num_lines)

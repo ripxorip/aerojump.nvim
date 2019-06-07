@@ -272,6 +272,8 @@ class Aerojump(object):
             n/a
 
         """
+        if not self.has_filter_results:
+            return
         self.cursor_line_index -= 1
         if self.cursor_line_index < 0:
             self.cursor_line_index = 0
@@ -293,6 +295,8 @@ class Aerojump(object):
             n/a
 
         """
+        if not self.has_filter_results:
+            return
         self.cursor_line_index += 1
         if self.cursor_line_index >= len(self.filtered_lines):
             self.cursor_line_index = len(self.filtered_lines) - 1
@@ -314,6 +318,8 @@ class Aerojump(object):
             n/a
 
         """
+        if not self.has_filter_results:
+            return
         self.cursor_match_index += 1
         if self.cursor_match_index >= len(self.filtered_lines[self.cursor_line_index].matches):
             self.cursor_line_down()
@@ -334,6 +340,8 @@ class Aerojump(object):
             n/a
 
         """
+        if not self.has_filter_results:
+            return
         self.cursor_match_index -= 1
         if self.cursor_match_index < 0:
             self.cursor_line_up()
@@ -535,9 +543,6 @@ class AerojumpBolt(Aerojump):
             # Already sorted
             self.cursor_line_index = 0
             self.cursor_match_index = 0
-            self.highlights = self._update_highlights(self.filtered_lines,
-                     self.cursor_line_index,
-                     self.cursor_match_index)
 
     def draw(self):
         """ Draw function of the space mode
@@ -555,12 +560,58 @@ class AerojumpBolt(Aerojump):
         """
 
         lines = []
+        line_num = 0
+        self.separator_indices = []
         for l in self.filtered_lines:
+            # Add separator
+            separator = '----------- Line: ' + str(l.num) + ' '
+            while (len(separator) < 40):
+                separator = separator + '-'
+            lines.append(separator)
+            self.separator_indices.append(line_num)
+            line_num += 1
+
+            # Add lines before
+            lines_before_res = self.settings['bolt_lines_before']
+            for i in range(0, lines_before_res):
+                index = l.num - 1 - lines_before_res + i
+                if index > 0:
+                    lines.append(self.lines[index].raw)
+                    line_num += 1
+
             lines.append(l.raw)
+            l.res_line = line_num + 1
+
+            # Add lines after
+            lines_after_res = self.settings['bolt_lines_after']
+            for i in range(0, lines_after_res):
+                index = l.num + 1 + i
+                if index < len(self.lines):
+                    lines.append(self.lines[index].raw)
+                    line_num += 1
+            line_num += 1
+
+        if self.has_filter_results:
+            self.highlights = self._update_highlights(self.filtered_lines,
+                     self.cursor_line_index,
+                     self.cursor_match_index)
 
         return {'lines':            lines,
                 'highlights':       self.highlights,
                 'cursor_position':  self.get_cursor()}
+
+    def _sort_filtered_lines(self):
+        """ Sorts the filtered lines depending on score
+
+            Parameters:
+                n/a
+
+            Returns:
+                n/a
+        """
+        for f in self.filtered_lines:
+            f.best_score = max(f.scores)
+        self.filtered_lines.sort(key=lambda x: x.best_score, reverse=True)
 
     def _update_highlights(self, filtered_lines, cursor_line_index, cursor_match_index):
         """ Updates the internal highlights
@@ -587,19 +638,8 @@ class AerojumpBolt(Aerojump):
         matches = l.matches[cursor_match_index]
         for m in matches:
             highlights.append(('SearchHighlight', l.res_line-1, m-1, m))
+        # Separators
+        for s in self.separator_indices:
+            highlights.append(('Comment', s))
         return highlights
-
-    def _sort_filtered_lines(self):
-        """ Sorts the filtered lines depending on score
-
-            Parameters:
-                n/a
-
-            Returns:
-                n/a
-        """
-        for f in self.filtered_lines:
-            f.best_score = max(f.scores)
-        self.filtered_lines.sort(key=lambda x: x.best_score, reverse=True)
-        for i in range(0, len(self.filtered_lines)): self.filtered_lines[i].res_line = i + 1
 
