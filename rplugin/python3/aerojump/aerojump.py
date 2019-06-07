@@ -542,6 +542,8 @@ class AerojumpBolt(Aerojump):
             self._sort_filtered_lines()
             # Already sorted
             self.cursor_line_index = 0
+            scores = self.filtered_lines[0].scores
+            self.cursor_match_index = scores.index(max(scores))
             self.cursor_match_index = 0
 
     def draw(self):
