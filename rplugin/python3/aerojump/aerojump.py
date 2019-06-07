@@ -6,8 +6,7 @@
 
 # ============================================================================
 # = Current TODO =
-# 1. Implement support for different modes (vacuum, space etc.)
-# 2. Improve the way search results are filtered (reward closeness in a better way)
+# 1. Improve the way search results are filtered (reward closeness in a better way) (done?!)
 # ============================================================================
 
 # Aerojump classes

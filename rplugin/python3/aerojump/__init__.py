@@ -45,10 +45,14 @@ class AerojumpNeovim(object):
         self.nvim.command('set filetype='+self.ft+'.aerojump')
         self.aerojump_buf_num = self.nvim.current.buffer.number
 
-    def __open_aerojump_filter_buf(self):
+    def __open_aerojump_filter_buf(self, filter_string = ''):
         self.nvim.command('e AerojumpFilter')
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=AerojumpFilter')
+        if filter_string != '':
+            # TODO Idea: Maybe add some special characters
+            # like regexp to enforce whole matches only?
+            self.nvim.current.buffer[0] = filter_string
         self.filt_buf_num = self.nvim.current.buffer.number
 
     def __set_cursor_position(self, pos):
@@ -193,13 +197,22 @@ class AerojumpNeovim(object):
         """ Start aerojump in its default (or last?) mode
 
         Parameters:
-            args[0]: Mode that aerojump will start in
+            args[0]: Where to take the initial input from
+                     - 'kbd' means using regular filter input
+                     - 'cursor' means symbol under cursor
+            args[1]: Mode that aerojump will start in
 
         Returns:
             n/a
         """
+        filter_string = ''
         settings = {}
-        settings['mode'] = args[0]
+        settings['input'] = args[0]
+        settings['mode'] = args[1]
+
+        if settings['input'] == 'cursor':
+            filter_string = self.nvim.eval('expand(\'<cword>\')').strip('\n')
+
         self.has_searched = True
         self.has_filter = False
         self.hl_source = self.nvim.new_highlight_source()
@@ -220,7 +233,7 @@ class AerojumpNeovim(object):
         self.ft = resp.split('=')[1]
 
         # Spawn the filter buffer
-        self.__open_aerojump_filter_buf()
+        self.__open_aerojump_filter_buf(filter_string)
 
         # Spawn the aerojump buffer
         self.__open_aerojump_buf()
