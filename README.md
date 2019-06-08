@@ -16,7 +16,7 @@ system it will move the cursor to the best match based on your input.
 Quickly move the cursor the line you want to go by typing some letters
 present in the line. All other lines are filtered away as you continue typing.
 
-### Searching
+### Bolt mode
 ![Example Highlight](https://imgur.com/evbd5Ad.gif)
 
 Perform a search using fuzzy-matching, results are graded through a scoring system
@@ -42,14 +42,14 @@ Plug 'philip-karlsson/aerojump.nvim', { 'do': ':UpdateRemotePlugins' }
 call plug#end()
 
 " Create mappings (with leader)
-nmap <Leader>aa <Plug>(AerojumpDefault)
+nmap <Leader>as <Plug>(AerojumpSpace)
+nmap <Leader>ab <Plug>(AerojumpBolt)
+nmap <Leader>aa <Plug>(AerojumpFromCursorBolt)
+nmap <Leader>ad <Plug>(AerojumpDefault) " Boring mode
 ....
 
-" Create mappings (without leader)
-" (Authors mapping)
-nmap aj <Plug>(AerojumpDefault)
-nmap ah <Plug>(AerojumpResumePrev)
-nmap al <Plug>(AerojumpResumeNext)
+" Or create mappings (without leader)
+nmap <space> <Plug>(AerojumpSpace)
 ```
 
 ## Usage
