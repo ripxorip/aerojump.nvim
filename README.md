@@ -10,22 +10,22 @@ system it will move the cursor to the best match based on your input.
 
 ## Demo
 
-### Navigation
+### Space mode
 ![Example Highlight](https://imgur.com/eUYLI3Q.gif)
 
-The filter is automatically updated as you type , no extra keystrokes needed.
+Quickly move the cursor the line you want to go by typing some letters
+present in the line. All other lines are filtered away as you continue typing.
 
 ### Searching
 ![Example Highlight](https://imgur.com/evbd5Ad.gif)
 
-Quicly perform a search in the active directory using [ripgrep](https://github.com/BurntSushi/ripgrep). If desired, expand the
-results to see which lines that matches your pattern. For convenience, simply start
-typing to filter your search results.
+Perform a search using fuzzy-matching, results are graded through a scoring system
+presenting the most relevant hits first.
 
-### Dual-pane
+### Boring mode
 ![Example Highlight](https://imgur.com/prtHSML.gif)
 
-Unleash the commander using the multi-pane mode.
+Space mode but unmatched lines are left intact.
 
 ## Installation
 
