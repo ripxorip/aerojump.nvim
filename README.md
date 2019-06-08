@@ -10,7 +10,22 @@ system it will move the cursor to the best match based on your input.
 
 ## Demo
 
-Coming soon...
+### Navigation
+![Example Highlight](https://imgur.com/eUYLI3Q.gif)
+
+The filter is automatically updated as you type , no extra keystrokes needed.
+
+### Searching
+![Example Highlight](https://imgur.com/evbd5Ad.gif)
+
+Quicly perform a search in the active directory using [ripgrep](https://github.com/BurntSushi/ripgrep). If desired, expand the
+results to see which lines that matches your pattern. For convenience, simply start
+typing to filter your search results.
+
+### Dual-pane
+![Example Highlight](https://imgur.com/prtHSML.gif)
+
+Unleash the commander using the multi-pane mode.
 
 ## Installation
 
