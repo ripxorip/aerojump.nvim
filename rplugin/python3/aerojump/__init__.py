@@ -390,8 +390,8 @@ class AerojumpNeovim(object):
         """
         self.nvim.command('stopinsert')
         self.nvim.current.buffer = self.og_buf
-        self.nvim.command('bd %s' % self.aerojump_buf_num)
-        self.nvim.command('bd %s' % self.filt_buf_num)
+        self.nvim.command('bwipeout %s' % self.aerojump_buf_num)
+        self.nvim.command('bwipeout %s' % self.filt_buf_num)
         # Restore original position
         self.nvim.current.window.cursor = self.top_pos
         self.nvim.command('normal! zt')
