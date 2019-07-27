@@ -376,7 +376,9 @@ class AerojumpNeovim(object):
 
         self.nvim.current.window.cursor = top_pos
         self.nvim.command('normal! zt')
-        self.nvim.current.window.cursor = cursor
+        # Doing it this way respects jump stack
+        self.nvim.command('normal! ' + str(cursor[0]) + 'G')
+        self.nvim.command('normal! ' + str(cursor[1]+1) + '|')
 
     @neovim.command("AerojumpExit", range='', nargs='*', sync=True)
     def AerojumpExit(self, args, range):
