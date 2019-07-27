@@ -180,7 +180,7 @@ class Aerojump(object):
             filter_string: string that will be used as filter
 
         Returns:
-            n/a
+            True if we still have filter results otherwise false
 
         """
         self.filter_string = filter_string
@@ -194,6 +194,9 @@ class Aerojump(object):
             self.highlights = self._update_highlights(self.filtered_lines,
                     self.cursor_line_index,
                     self.cursor_match_index)
+            return True
+        else:
+            return False
 
     def draw(self):
         """ Draw function of the default mode
@@ -531,7 +534,7 @@ class AerojumpBolt(Aerojump):
             filter_string: string that will be used as filter
 
         Returns:
-            n/a
+            True if we still have filter results otherwise false
 
         """
         self.filter_string = filter_string
@@ -545,6 +548,9 @@ class AerojumpBolt(Aerojump):
             self.cursor_line_index = 0
             scores = self.filtered_lines[self.cursor_line_index].scores
             self.cursor_match_index = scores.index(max(scores))
+            return True
+        else:
+            return False
 
     def draw(self):
         """ Draw function of the space mode

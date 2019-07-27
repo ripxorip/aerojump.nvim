@@ -163,8 +163,13 @@ class AerojumpNeovim(object):
         if self.filter_string == self.nvim.current.line:
             return
         self.filter_string = self.nvim.current.line
-        self.aj.apply_filter(self.filter_string)
-        self.__draw()
+        has_res = self.aj.apply_filter(self.filter_string)
+        if has_res:
+            self.__draw()
+        else:
+            # Erase the last character
+            self.filter_string = self.filter_string[:-1]
+            self.nvim.current.line = self.filter_string
 
     @neovim.command("AerojumpResumeNext", range='', nargs='*', sync=True)
     def AerojumpResumeNext(self, args, range):
