@@ -110,7 +110,6 @@ class AerojumpNeovim(object):
         self.nvim.command("inoremap <buffer> <C-q> <ESC>:AerojumpExit<CR>")
         self.nvim.command("inoremap <buffer> <ESC> <ESC>:AerojumpSelect<CR>")
         self.nvim.command("inoremap <buffer> <CR> <ESC>:AerojumpSelect<CR>")
-        self.nvim.command("inoremap <buffer> aj <ESC>:AerojumpSelect<CR>")
         self.nvim.command("inoremap <buffer> <Space> <ESC>:AerojumpSelect<CR>")
 
     def __resume(self):
