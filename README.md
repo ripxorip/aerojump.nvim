@@ -55,8 +55,8 @@ nmap <space> <Plug>(AerojumpSpace)
 ## Usage
 
 Invoke aerojump in the desired mode. Start typing some characters that matches
-where you will go and finish the query by pressing either <Enter> (to go there)
-or escape to return to where you were in the buffer before.
+where you will go and finish the query by pressing either `enter` (to go there)
+or `escape` to return to where you were in the buffer before.
 
 ### Keybindings
 | Command               | Action                                                                                |
