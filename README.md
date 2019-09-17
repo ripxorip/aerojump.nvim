@@ -37,7 +37,7 @@ See [requirements](#requirements) if you aren't sure whether you have this.
 
 call plug#begin()
 
-Plug 'philip-karlsson/aerojump.nvim', { 'do': ':UpdateRemotePlugins' }
+Plug 'ripxorip/aerojump.nvim', { 'do': ':UpdateRemotePlugins' }
 
 call plug#end()
 
