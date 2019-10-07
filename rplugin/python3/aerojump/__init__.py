@@ -94,7 +94,7 @@ class AerojumpNeovim(object):
             self.__set_cursor_position(ret['cursor_position'])
         else:
             # Draw unfiltered output
-            self.buf_ref[:] = self.og_buf[:]
+            self.buf_ref[:] = self.og_lines[:]
             self.__set_top_pos(self.top_pos)
             self.__set_cursor_position(self.og_pos)
 
@@ -131,7 +131,7 @@ class AerojumpNeovim(object):
 
         # Paste the lines of the old buffer to the new
         new_buf = self.nvim.current.buffer
-        new_buf[:] = self.og_buf[:]
+        new_buf[:] = self.og_lines[:]
 
         # Restore main win
         self.main_win = self.nvim.current.window
@@ -221,6 +221,7 @@ class AerojumpNeovim(object):
         self.has_filter = False
         self.hl_source = self.nvim.new_highlight_source()
         self.og_buf = self.nvim.current.buffer
+        self.og_lines = self.nvim.current.buffer[:]
         window = self.nvim.current.window
 
         # Height could be used to optimize performance?
@@ -246,7 +247,7 @@ class AerojumpNeovim(object):
         self.buf_ref = self.nvim.current.buffer
 
         # Create lines
-        self.aj = self.__create_aerojumper(settings, self.og_buf, self.og_pos, self.top_pos, self.window_height)
+        self.aj = self.__create_aerojumper(settings, self.og_lines, self.og_pos, self.top_pos, self.window_height)
 
         # Update position
         self.main_win = self.nvim.current.window
