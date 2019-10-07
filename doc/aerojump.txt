@@ -39,7 +39,20 @@ In order to invoke aerojump, add the following into your config file:
 3. Configuration                                         *aerojump-configuration*
 
 You can tweak the behavior of aerojump by setting a few variables in your
-config file (TBD).
+config file.
+
+You can define custom shortcuts through the global variable
+`g:aerojump_keymaps`. Refer to `rplugin/python3/aerojump/__init__.py` for
+looking up the current commands available.
+>
+  let g:aerojump_keymaps = {
+    \ "<Tab>": "AerojumpDown",
+    \ "<Esc>": "AerojumpExit",
+    \ "<C-T>": "AerojumpSelect",
+    \ }
+<
+Other maps will *NOT* be overriden by your custom definitions, so you're able to
+specify only the ones you'd want to change.
 
 ==============================================================================
 4. Contributing                                           *aerojump-contributing*
