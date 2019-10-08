@@ -33,6 +33,20 @@ class AerojumpNeovim(object):
         self.logstr = []
         self.logstr.append('== Aerojump debug ==')
         self.has_searched = False
+        self.default_keymaps = {
+            "<C-h>": "AerojumpSelPrev",
+            "<Left>": "AerojumpSelPrev",
+            "<C-j>": "AerojumpDown",
+            "<Down>": "AerojumpDown",
+            "<C-k>": "AerojumpUp",
+            "<Up>": "AerojumpUp",
+            "<C-l>": "AerojumpSelNext",
+            "<Right>": "AerojumpSelNext",
+            "<C-q>": "AerojumpExit",
+            "<ESC>": "AerojumpSelect",
+            "<CR>": "AerojumpSelect",
+            "<Space>": "AerojumpSelect",
+        }
 
     def __log(self, s):
         self.logstr.append(str(s))
@@ -99,18 +113,10 @@ class AerojumpNeovim(object):
             self.__set_cursor_position(self.og_pos)
 
     def __create_keymap(self):
-        self.nvim.command("inoremap <buffer> <C-h> <ESC>:AerojumpSelPrev<CR>")
-        self.nvim.command("inoremap <buffer> <Left> <ESC>:AerojumpSelPrev<CR>")
-        self.nvim.command("inoremap <buffer> <C-j> <ESC>:AerojumpDown<CR>")
-        self.nvim.command("inoremap <buffer> <Down> <ESC>:AerojumpDown<CR>")
-        self.nvim.command("inoremap <buffer> <C-k> <ESC>:AerojumpUp<CR>")
-        self.nvim.command("inoremap <buffer> <Up> <ESC>:AerojumpUp<CR>")
-        self.nvim.command("inoremap <buffer> <C-l> <ESC>:AerojumpSelNext<CR>")
-        self.nvim.command("inoremap <buffer> <Right> <ESC>:AerojumpSelNext<CR>")
-        self.nvim.command("inoremap <buffer> <C-q> <ESC>:AerojumpExit<CR>")
-        self.nvim.command("inoremap <buffer> <ESC> <ESC>:AerojumpSelect<CR>")
-        self.nvim.command("inoremap <buffer> <CR> <ESC>:AerojumpSelect<CR>")
-        self.nvim.command("inoremap <buffer> <Space> <ESC>:AerojumpSelect<CR>")
+        keymaps = self.default_keymaps.copy()
+        keymaps.update(self.nvim.vars.get("aerojump_keymaps", {}))
+        for key in keymaps:
+            self.nvim.command(f"inoremap <buffer> {key} <ESC>:{keymaps[key]}<CR>")
 
     def __resume(self):
         # Check if we have jumped or not

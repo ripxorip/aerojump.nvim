@@ -59,6 +59,9 @@ where you will go and finish the query by pressing either `enter` (to go there)
 or `escape` to return to where you were in the buffer before.
 
 ### Keybindings
+
+You're able to modify those keybindings through `g:aerojump_keymaps`.
+
 | Command               | Action                                                                                |
 | ---                   | ---                                                                                   |
 | `enter`               | Move cursor to the selected result
@@ -75,6 +78,7 @@ Like aerojump.nvim? Make sure to follow the repository and why not leave a star.
 
 ## Contributors
 - Philip Karlsson Gisslow
+- @resolritter
 
 ## License
 MIT License
