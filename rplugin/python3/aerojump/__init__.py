@@ -33,6 +33,7 @@ class AerojumpNeovim(object):
         self.logstr = []
         self.logstr.append('== Aerojump debug ==')
         self.has_searched = False
+        self.uses_tabs = nvim.vars.get("aerojump_uses_tabs")
         self.default_keymaps = {
             "<C-h>": "AerojumpSelPrev",
             "<Left>": "AerojumpSelPrev",
@@ -60,7 +61,10 @@ class AerojumpNeovim(object):
         self.aerojump_buf_num = self.nvim.current.buffer.number
 
     def __open_aerojump_filter_buf(self, filter_string = ''):
-        self.nvim.command('e AerojumpFilter')
+        if self.uses_tabs:
+            self.nvim.command('tabedit AerojumpFilter')
+        else:
+            self.nvim.command('edit AerojumpFilter')
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=AerojumpFilter')
         if filter_string != '':
@@ -400,6 +404,8 @@ class AerojumpNeovim(object):
         self.nvim.current.buffer = self.og_buf
         self.nvim.command('bwipeout %s' % self.aerojump_buf_num)
         self.nvim.command('bwipeout %s' % self.filt_buf_num)
+        if self.uses_tabs:
+            self.nvim.command('tabclose')
         # Restore original position
         self.nvim.current.window.cursor = self.top_pos
         self.nvim.command('normal! zt')
