@@ -41,6 +41,9 @@ In order to invoke aerojump, add the following into your config file:
 You can tweak the behavior of aerojump by setting a few variables in your
 config file.
 
+
+`g:aerojump_keymaps` (default: {})
+
 You can define custom shortcuts through the global variable
 `g:aerojump_keymaps`. Refer to `rplugin/python3/aerojump/__init__.py` for
 looking up the current commands available.
@@ -53,6 +56,17 @@ looking up the current commands available.
 <
 Other maps will *NOT* be overriden by your custom definitions, so you're able to
 specify only the ones you'd want to change.
+
+
+`g:aerojump_uses_tabs` (default: 0)
+
+By default, Aerojump will use the `edit` command to start creating its
+buffers. This won't work when you try to activate Aerojump on modified
+buffers, as it will throw an exception.
+
+To circumvent that issue, you can enable this variable to always start with
+`tabedit` instead, which creates another tab and closes it when you exit
+Aerojump
 
 ==============================================================================
 4. Contributing                                           *aerojump-contributing*
