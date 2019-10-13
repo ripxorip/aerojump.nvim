@@ -33,7 +33,6 @@ class AerojumpNeovim(object):
         self.logstr = []
         self.logstr.append('== Aerojump debug ==')
         self.has_searched = False
-        self.uses_tabs = nvim.vars.get("aerojump_uses_tabs")
         self.default_keymaps = {
             "<C-h>": "AerojumpSelPrev",
             "<Left>": "AerojumpSelPrev",
@@ -219,6 +218,7 @@ class AerojumpNeovim(object):
         Returns:
             n/a
         """
+        self.uses_tabs = self.nvim.vars.get("aerojump_uses_tabs")
         filter_string = ''
         settings = {}
         settings['input'] = args[0]
