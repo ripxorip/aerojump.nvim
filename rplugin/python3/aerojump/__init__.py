@@ -5,10 +5,10 @@
 # ============================================================================
 
 import neovim
-import os
-import re
 
-from aerojump.aerojump import Aerojump, AerojumpSpace, AerojumpBolt
+from aerojump.aerojump import Aerojump, AerojumpSpace, AerojumpBolt, \
+    AerojumpMilk
+
 
 def get_output_of_vim_cmd(nvim, cmd):
     """ Utility function to get the current output
@@ -25,6 +25,7 @@ def get_output_of_vim_cmd(nvim, cmd):
     nvim.command(cmd)
     nvim.command('redir END')
     return nvim.eval('@a').strip('\n')
+
 
 @neovim.plugin
 class AerojumpNeovim(object):
@@ -59,7 +60,7 @@ class AerojumpNeovim(object):
         self.nvim.command('set filetype='+self.ft+'.aerojump')
         self.aerojump_buf_num = self.nvim.current.buffer.number
 
-    def __open_aerojump_filter_buf(self, filter_string = ''):
+    def __open_aerojump_filter_buf(self, filter_string=''):
         if self.uses_tabs:
             self.nvim.command('tabedit AerojumpFilter')
         else:
@@ -85,19 +86,23 @@ class AerojumpNeovim(object):
         self.nvim.command('normal! zt')
         self.nvim.current.window = old_win
 
-    def __create_aerojumper(self, settings, lines, cursor_pos, top_line, num_lines):
-        lin_nums = []
-        for i, line in enumerate(lines):
-            lin_nums.append(i+1)
+    def __create_aerojumper(
+            self, settings, lines, cursor_pos, top_line, num_lines):
+        lin_nums = list(range(1, len(lines) + 1))
         if settings['mode'] == 'space':
-            return AerojumpSpace(settings, lines, lin_nums, cursor_pos, top_line, num_lines)
+            return AerojumpSpace(
+                    settings, lines, lin_nums, cursor_pos, top_line, num_lines)
+        elif settings['mode'] == 'milk':
+            return AerojumpMilk(
+                    settings, lines, lin_nums, cursor_pos, top_line, num_lines)
         elif settings['mode'] == 'bolt':
             settings['bolt_lines_before'] = 1
             settings['bolt_lines_after'] = 1
-            return AerojumpBolt(settings, lines, lin_nums, cursor_pos, top_line, num_lines)
+            return AerojumpBolt(
+                    settings, lines, lin_nums, cursor_pos, top_line, num_lines)
         else:
-            return Aerojump(settings, lines, lin_nums, cursor_pos, top_line, num_lines)
-
+            return Aerojump(
+                    settings, lines, lin_nums, cursor_pos, top_line, num_lines)
 
     def __update_highlights(self, highlights):
         self.buf_ref.update_highlights(self.hl_source, highlights, clear=True)
@@ -118,8 +123,8 @@ class AerojumpNeovim(object):
     def __create_keymap(self):
         keymaps = self.default_keymaps.copy()
         keymaps.update(self.nvim.vars.get("aerojump_keymaps", {}))
-        for key in keymaps:
-            self.nvim.command(f"inoremap <buffer> {key} <ESC>:{keymaps[key]}<CR>")
+        for k in keymaps:
+            self.nvim.command(f"inoremap <buffer> {k} <ESC>:{keymaps[k]}<CR>")
 
     def __resume(self):
         # Check if we have jumped or not
@@ -157,7 +162,7 @@ class AerojumpNeovim(object):
         self.__create_keymap()
 
     # Aerojump Commands
-    #====================
+    # ====================
     @neovim.autocmd("TextChangedI", pattern='AerojumpFilter', sync=True)
     def insert_changed(self):
         """ Autocmd for when text changes
@@ -190,7 +195,7 @@ class AerojumpNeovim(object):
             n/a
         """
         self.__resume()
-        self.AerojumpSelNext('','')
+        self.AerojumpSelNext('', '')
 
     @neovim.command("AerojumpResumePrev", range='', nargs='*', sync=True)
     def AerojumpResumePrev(self, args, range):
@@ -203,7 +208,7 @@ class AerojumpNeovim(object):
             n/a
         """
         self.__resume()
-        self.AerojumpSelPrev('','')
+        self.AerojumpSelPrev('', '')
 
     @neovim.command("Aerojump", range='', nargs='*', sync=True)
     def Aerojump(self, args, range):
@@ -257,7 +262,10 @@ class AerojumpNeovim(object):
         self.buf_ref = self.nvim.current.buffer
 
         # Create lines
-        self.aj = self.__create_aerojumper(settings, self.og_lines, self.og_pos, self.top_pos, self.window_height)
+        self.aj = self.__create_aerojumper(
+                settings, self.og_lines, self.og_pos,
+                self.top_pos, self.window_height
+                )
 
         # Update position
         self.main_win = self.nvim.current.window
@@ -288,9 +296,8 @@ class AerojumpNeovim(object):
         self.nvim.command('setlocal buftype=nofile')
         self.nvim.command('setlocal filetype=aerojump_log')
         self.nvim.current.buffer.append(self.logstr)
-        aj_log = self.aj.get_log()
         self.nvim.current.buffer.append('== Aerojump log ==')
-        for l in aj_log: self.nvim.current.buffer.append(l)
+        self.nvim.current.buffer.extend(self.aj.get_log())
 
     @neovim.command("AerojumpUp", range='', nargs='*', sync=True)
     def AerojumpUp(self, args, range):
@@ -410,4 +417,3 @@ class AerojumpNeovim(object):
         self.nvim.current.window.cursor = self.top_pos
         self.nvim.command('normal! zt')
         self.nvim.current.window.cursor = self.og_pos
-

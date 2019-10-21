@@ -5,6 +5,7 @@
 nnoremap <silent> <Plug>(AerojumpDefault) :Aerojump kbd default<Return>
 nnoremap <silent> <Plug>(AerojumpSpace) :Aerojump kbd space<Return>
 nnoremap <silent> <Plug>(AerojumpBolt) :Aerojump kbd bolt<Return>
+nnoremap <silent> <Plug>(AerojumpMilk) :Aerojump kbd milk<Return>
 
 nnoremap <silent> <Plug>(AerojumpFromCursorBolt) :Aerojump cursor bolt <cword> <Return>
 
