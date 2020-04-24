@@ -12,3 +12,11 @@ nnoremap <silent> <Plug>(AerojumpFromCursorBolt) :Aerojump cursor bolt <cword> <
 nnoremap <silent> <Plug>(AerojumpShowLog) :AerojumpShowLog<Return>
 nnoremap <silent> <Plug>(AerojumpResumeNext) :AerojumpResumeNext<Return>
 nnoremap <silent> <Plug>(AerojumpResumePrev) :AerojumpResumePrev<Return>
+
+" Changes settings that conflict with aerojump
+augroup AerojumpBufSettings
+  au!
+  au Filetype AerojumpFilter setlocal nosplitbelow nosplitright
+  au Filetype *.aerojump setlocal nolist
+augroup END
+
