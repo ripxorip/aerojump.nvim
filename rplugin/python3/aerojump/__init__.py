@@ -53,11 +53,11 @@ class AerojumpNeovim(object):
         self.logstr.append(str(s))
 
     def __open_aerojump_buf(self):
-        self.nvim.command('split Aerojump')
-        self.nvim.command('setlocal buftype=nofile')
-        self.nvim.command('setlocal filetype=aerojump')
+        self.nvim.command('silent split Aerojump')
+        self.nvim.command('silent setlocal buftype=nofile')
+        self.nvim.command('silent setlocal filetype=aerojump')
         # Fix filetype in order to keep old syntax
-        self.nvim.command('set filetype='+self.ft+'.aerojump')
+        self.nvim.command('silent set filetype='+self.ft+'.aerojump')
         self.aerojump_buf_num = self.nvim.current.buffer.number
 
     def __open_aerojump_filter_buf(self, filter_string=''):
@@ -249,7 +249,7 @@ class AerojumpNeovim(object):
         self.top_pos = window.cursor
 
         # Sample current filetype
-        resp = get_output_of_vim_cmd(self.nvim, 'set filetype?')
+        resp = self.nvim.command_output('set filetype?')
         self.ft = resp.split('=')[1]
 
         # Spawn the filter buffer
