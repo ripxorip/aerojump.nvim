@@ -69,7 +69,7 @@ You're able to modify those keybindings through `g:aerojump_keymaps`.
 | `aj`                  | Move cursor to the selected result
 | `Space`               | Move cursor to the selected result
 | `C-q`                 | Exit aerojump (cursor moves back to original position)
-| `Ctrl-j/k`            | Navigate line wise (up/down)
+| `Ctrl-n/p`            | Navigate line wise (up/down)
 | `Ctrl-h/l`            | Navigate match wise (next/previous)
 | `C-space`             | Move cursor to the selected result
 
