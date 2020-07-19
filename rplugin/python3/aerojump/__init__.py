@@ -37,7 +37,7 @@ class AerojumpNeovim(object):
         self.default_keymaps = {
             "<C-p>": "AerojumpUp",
             "<Left>": "AerojumpSelPrev",
-            "<C-h>": "AerojumpSelPrev",
+            "<C-g>": "AerojumpSelPrev",
             "<C-j>": "AerojumpSelect",
             "<Down>": "AerojumpDown",
             "<C-k>": "AerojumpUp",
