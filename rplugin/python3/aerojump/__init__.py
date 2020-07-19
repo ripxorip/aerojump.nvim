@@ -35,13 +35,13 @@ class AerojumpNeovim(object):
         self.logstr.append('== Aerojump debug ==')
         self.has_searched = False
         self.default_keymaps = {
-            "<C-h>": "AerojumpSelPrev",
+            "<C-p>": "AerojumpSelPrev",
             "<Left>": "AerojumpSelPrev",
-            "<C-j>": "AerojumpDown",
+            "<C-j>": "AerojumpSelect",
             "<Down>": "AerojumpDown",
             "<C-k>": "AerojumpUp",
             "<Up>": "AerojumpUp",
-            "<C-l>": "AerojumpSelNext",
+            "<C-n>": "AerojumpSelNext",
             "<Right>": "AerojumpSelNext",
             "<C-q>": "AerojumpExit",
             "<ESC>": "AerojumpSelect",
